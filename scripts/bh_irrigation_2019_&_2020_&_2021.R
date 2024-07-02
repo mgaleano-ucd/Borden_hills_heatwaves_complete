@@ -1008,60 +1008,8 @@ anyNA(cumulative_irrigation$Date)
 year_start_dates <- as.Date(c("2019-01-01", "2020-01-01", "2021-01-01"))
 year_end_dates <- as.Date(c("2019-12-31", "2020-12-31", "2021-12-31"))
 
-# Create the plot
-panel_plot_cumulative_irr_bh_2019_2020_2021 <- ggplot(cumulative_irrigation, aes(x = Date, y = Cumulative_Irrigation_mm_total, color = treatment)) +
-  geom_line(size = 1, alpha = 0.8) +
-  geom_point(size = 1.1, alpha = 0.6) +
-  theme_classic() +
-  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET")) +
-  ylab("Cumulative irrigation (mm)") +
-  xlab("Date") +
-  scale_x_date(date_labels = "%b %Y", breaks = seq.Date(min(cumulative_irrigation$Date, na.rm = TRUE), max(cumulative_irrigation$Date, na.rm = TRUE), by = "1.8 months")) +
-  theme(axis.text.x = element_text(size = 20,angle = 45, hjust = 1)) + # Rotate x-axis labels for better readability
-  theme(axis.text.y = element_text(size = 20)) +
-  theme(axis.title.y = element_text(size = 24, family = "serif")) +
-  theme(axis.title.x = element_text(size = 24, family = "serif")) +
-  guides(color = guide_legend(override.aes = list(size = 5))) + # Increase legend size
-  geom_vline(xintercept = year_start_dates, linetype = "dashed", color = "black") +
-  geom_vline(xintercept = year_end_dates, linetype = "dashed", color = "black") +
-  annotate("rect", xmin = as.Date("2019-07-25"), xmax = as.Date("2019-07-29"), ymin = 0, ymax = 1250, alpha = .2) +
-  annotate("rect", xmin = as.Date("2019-08-13"), xmax = as.Date("2019-08-17"), ymin = 0, ymax = 1250, alpha = .2) +
-  annotate("text", x = as.Date("2019-07-27"), y = 1250, label = "HW1", size = 4.5) +
-  annotate("text", x = as.Date("2019-08-15"), y = 1250, label = "HW2", size = 4.5) +
-  annotate("rect", xmin =  as.Date("2020-05-26", "%Y-%m-%d"), xmax = as.Date("2020-05-28", "%Y-%m-%d") , ymin = 0, ymax = 1250,
-           alpha = .2) +
-  annotate("rect", xmin =  as.Date("2020-07-09", "%Y-%m-%d"), xmax = as.Date("2020-07-12", "%Y-%m-%d") , ymin = 0, ymax = 1250,
-           alpha = .2)+
-  annotate("rect", xmin =  as.Date("2020-08-13", "%Y-%m-%d"), xmax = as.Date("2020-08-19", "%Y-%m-%d") , ymin = 0, ymax = 1250,
-           alpha = .2)+
-  annotate("rect", xmin =  as.Date("2020-09-05", "%Y-%m-%d"), xmax = as.Date("2020-09-08", "%Y-%m-%d") , ymin = 0, ymax = 1250,
-           alpha = .2)+
-  annotate("text", x = as.Date("2020-05-27", "%Y-%m-%d"), y = 1250, label = "HW1", size = 4.5) +
-  annotate("text",  x = as.Date("2020-07-10", "%Y-%m-%d"), y = 1250, label ="HW2", size = 4.5) +
-  annotate("text",  x = as.Date("2020-08-16", "%Y-%m-%d"), y = 1250, label ="HW3", size = 4.5)  +
-  annotate("text",  x = as.Date("2020-09-07", "%Y-%m-%d"), y = 1250, label ="HW4", size = 4.5)+
-  annotate("text", x = as.Date("09-08-2021", format= "%m-%d-%Y"), y = 1250, label = "HW3", size = 4.5) +
-  annotate("text", x = as.Date("07-10-2021", format= "%m-%d-%Y"), y = 1250, label = "HW2", size = 4.5) +
-  annotate("text", x = as.Date("06-18-2021", format= "%m-%d-%Y"), y = 1250, label = "HW1", size = 4.5) +
-  annotate("rect", xmin =  as.Date("2021-09-07", "%Y-%m-%d"), xmax = as.Date("2021-09-09", "%Y-%m-%d") , ymin = 0, ymax = 1250,
-           alpha = .2) +
-  annotate("rect", xmin =  as.Date("2021-07-08", "%Y-%m-%d"), xmax = as.Date("2021-07-11", "%Y-%m-%d") , ymin = 0, ymax = 1250,
-           alpha = .2) +
-  annotate("rect", xmin =  as.Date("2021-06-17", "%Y-%m-%d"), xmax = as.Date("2021-06-20", "%Y-%m-%d") , ymin = 0, ymax = 1250,
-           alpha = .2)+
-scale_y_continuous(breaks=seq(0,1300,200), limits = c (0,1300)) +  
-  annotate("text", x = as.Date("08-01-2019", format= "%m-%d-%Y"), y = 1300, label = "2019", size = 6) +
-  annotate("text", x = as.Date("06-30-2020", format= "%m-%d-%Y"), y = 1300, label = "2020", size = 6) +
-  annotate("text", x = as.Date("05-30-2021", format= "%m-%d-%Y"), y = 1300, label = "2021", size = 6)+
-  scale_y_continuous(
-    breaks = seq(0, 1300, 200), limits = c(0, 1300),
-    sec.axis = sec_axis(~ . / 10, name = "Daily Precipitation (mm)")
-  ) +
-  geom_line(combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10), color = "blue", size = 0.5, alpha = 0.7) +
-  geom_point(combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10), color = "blue", size = 1.5, alpha = 0.7) 
 
-# 
-ggsave(panel_plot_cumulative_irr_bh_2019_2020_2021, filename = "figures/panel_plot_cumulative_irr_bh_2019_2020_2021.pdf", device = cairo_pdf, width = 21, height =11)
+
 
 ####Add daily precipations to the cumulative irrigation plot####
 
@@ -1105,7 +1053,7 @@ bh_daily_precipitation_2019$Date<-mdy(bh_daily_precipitation_2019$Date)
 str(bh_daily_precipitation_2019$Date)
 
 combined_daily_precipitation_bh <- bind_rows(
-bh_daily_precipitation_2019, bh_daily_precipitation_2020, bh_daily_precipitation_2021
+  bh_daily_precipitation_2019, bh_daily_precipitation_2020, bh_daily_precipitation_2021
 )%>%
   select(Date, daily_rain_mm)
 
@@ -1116,14 +1064,68 @@ combined_daily_precipitation_bh %>%
   mutate(Year = format(Date, "%Y")) %>%
   group_by(Year) %>%
   summarize(Total_Precipitation_mm = sum(daily_rain_mm, na.rm = TRUE))
-  
-
 
 panel_plot_cumulative_irr_bh_2019_2020_2021_with_daily_irrigation <- ggplot(cumulative_irrigation, aes(x = Date, y = Cumulative_Irrigation_mm_total, color = treatment)) +
   geom_line(size = 1, alpha = 0.8) +
   geom_point(size = 1.1, alpha = 0.6) +
   theme_classic() +
-  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET")) +
+  scale_y_continuous(
+    breaks = seq(0, 1300, 200), limits = c(0, 1300),
+    sec.axis = sec_axis(~ . / 10, name = "Daily Precipitation (mm)")
+  ) +
+  geom_line(data = combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10), color = "blue", size = 0.5, alpha = 0.7) +
+  geom_point(data = combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10), color = "blue", size = 1, alpha = 0.7)+
+  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET", "Precipation mm")) +
+  ylab("Cumulative irrigation (mm)") +
+  xlab("Date") +
+  scale_x_date(date_labels = "%b %Y", breaks = seq.Date(min(combined_daily_precipitation_bh$Date, na.rm = TRUE), max(combined_daily_precipitation_bh$Date, na.rm = TRUE), by = "1.8 months")) +
+  theme(axis.text.x = element_text(size = 20, angle = 45, hjust = 1)) + # Rotate x-axis labels for better readability
+  theme(axis.text.y = element_text(size = 20)) +
+  theme(axis.title.y = element_text(size = 24, family = "serif")) +
+  theme(axis.title.x = element_text(size = 24, family = "serif")) +
+  guides(color = guide_legend(override.aes = list(size = 5))) + # Increase legend size
+  geom_vline(xintercept = year_start_dates, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = year_end_dates, linetype = "dashed", color = "black") +
+  annotate("rect", xmin = as.Date("2019-07-25"), xmax = as.Date("2019-07-29"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("rect", xmin = as.Date("2019-08-13"), xmax = as.Date("2019-08-17"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("text", x = as.Date("2019-07-24"), y = 1250, label = "HW1", size = 5) +
+  annotate("text", x = as.Date("2019-08-19"), y = 1250, label = "HW2", size = 5) +
+  annotate("rect", xmin = as.Date("2020-05-26"), xmax = as.Date("2020-05-28"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("rect", xmin = as.Date("2020-07-09"), xmax = as.Date("2020-07-12"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("rect", xmin = as.Date("2020-08-13"), xmax = as.Date("2020-08-19"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("rect", xmin = as.Date("2020-09-05"), xmax = as.Date("2020-09-08"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("text", x = as.Date("2020-05-27"), y = 1250, label = "HW1", size = 5) +
+  annotate("text", x = as.Date("2020-07-10"), y = 1250, label = "HW2", size = 5) +
+  annotate("text", x = as.Date("2020-08-12"), y = 1250, label = "HW3", size = 5) +
+  annotate("text", x = as.Date("2020-09-10"), y = 1250, label = "HW4", size = 5) +
+  annotate("text", x = as.Date("09-08-2021", format= "%m-%d-%Y"), y = 1250, label = "HW3", size = 5) +
+  annotate("text", x = as.Date("07-12-2021", format= "%m-%d-%Y"), y = 1250, label = "HW2", size = 5) +
+  annotate("text", x = as.Date("06-15-2021", format= "%m-%d-%Y"), y = 1250, label = "HW1", size = 5) +
+  annotate("rect", xmin = as.Date("2021-09-07"), xmax = as.Date("2021-09-09"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("rect", xmin = as.Date("2021-07-09"), xmax = as.Date("2021-07-11"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("rect", xmin = as.Date("2021-06-18"), xmax = as.Date("2021-06-20"), ymin = 0, ymax = 1250, alpha = .2) +
+  annotate("text", x = as.Date("08-01-2019", format= "%m-%d-%Y"), y = 1300, label = "2019", size = 6) +
+  annotate("text", x = as.Date("06-30-2020", format= "%m-%d-%Y"), y = 1300, label = "2020", size = 6) +
+  annotate("text", x = as.Date("05-30-2021", format= "%m-%d-%Y"), y = 1300, label = "2021", size = 6)+
+  theme(legend.text = element_text(size = 14))+
+  theme(legend.title = element_text(size = 14))# Increase legend text size
+
+ggsave(panel_plot_cumulative_irr_bh_2019_2020_2021_with_daily_irrigation, filename = "figures/panel_plot_cumulative_irr_bh_2019_2020_2021_with_daily_irrigation.png", width = 23, height =12, dpi =300)
+
+
+# Add treatment column to combined_daily_precipitation_bh with constant value
+combined_daily_precipitation_bh$treatment <- "Daily Precipitation"
+
+# Plot cumulative irrigation with viridis colors for treatments and add daily precipitation to the legend
+combined_daily_precipitation_bh<- ggplot(cumulative_irrigation, aes(x = Date, y = Cumulative_Irrigation_mm_total, color = treatment)) +
+  geom_line(size = 1, alpha = 0.8) +
+  geom_point(size = 1.1, alpha = 0.6) +
+  geom_line(data = combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10, color = treatment), size = 0.5, alpha = 0.7, show.legend = TRUE) +
+  geom_point(data = combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10, color = treatment), size = 1, alpha = 0.7, show.legend = TRUE) +
+  theme_classic() +
+  scale_colour_manual(values = c(scales::viridis_pal(direction = -1, begin = 0.05, end = 0.93)(3), "blue"), 
+                      name = "Legend", 
+                      labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET", "Daily Precipitation")) +
   ylab("Cumulative irrigation (mm)") +
   xlab("Date") +
   scale_x_date(date_labels = "%b %Y", breaks = seq.Date(min(combined_daily_precipitation_bh$Date, na.rm = TRUE), max(combined_daily_precipitation_bh$Date, na.rm = TRUE), by = "1.8 months")) +
@@ -1156,14 +1158,11 @@ panel_plot_cumulative_irr_bh_2019_2020_2021_with_daily_irrigation <- ggplot(cumu
     breaks = seq(0, 1300, 200), limits = c(0, 1300),
     sec.axis = sec_axis(~ . / 10, name = "Daily Precipitation (mm)")
   ) +
-  geom_line(data = combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10), color = "blue", size = 0.5, alpha = 0.7) +
-  geom_point(data = combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10), color = "blue", size = 1, alpha = 0.7) +
   annotate("text", x = as.Date("08-01-2019", format= "%m-%d-%Y"), y = 1300, label = "2019", size = 6) +
   annotate("text", x = as.Date("06-30-2020", format= "%m-%d-%Y"), y = 1300, label = "2020", size = 6) +
-  annotate("text", x = as.Date("05-30-2021", format= "%m-%d-%Y"), y = 1300, label = "2021", size = 6)+
-  theme(legend.text = element_text(size = 14))+
-  theme(legend.title = element_text(size = 14))# Increase legend text size
+  annotate("text", x = as.Date("05-30-2021", format= "%m-%d-%Y"), y = 1300, label = "2021", size = 6) +
+  theme(legend.text = element_text(size = 14)) +
+  theme(legend.title = element_text(size = 14)) # Increase legend text size
 
-ggsave(panel_plot_cumulative_irr_bh_2019_2020_2021_with_daily_irrigation, filename = "figures/panel_plot_cumulative_irr_bh_2019_2020_2021_with_daily_irrigation.png", width = 23, height =12, dpi =300)
-
-
+print(combined_daily_precipitation_bh)
+ggsave(combined_daily_precipitation_bh, filename = "figures/combined_daily_precipitation_bh.png", width = 23, height =12, dpi =300)
