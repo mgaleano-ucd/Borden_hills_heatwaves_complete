@@ -212,14 +212,14 @@ significant_diffs <- results_df_A_diurnal_july_1_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 1  # Adjust this value based on your desired spacing
+vertical_offset <- 1.5  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
   arrange(interval, desc(letters_ordered.groups)) %>%  # Sort by interval and descending order of significance letters
   group_by(interval) %>%
   mutate(max_mean = max(mean),
-         y_position = max_mean + vertical_offset * (row_number() - 1)) 
+         y_position = max_mean + vertical_offset * (row_number() - 0.9)) 
 
 # Create the plot with letters of significance above the max mean points
 A_vs_time_july_1_BH_2019_diurnal_with_letters <- A_vs_time_july_1_BH_2019_diurnal +
@@ -228,7 +228,7 @@ A_vs_time_july_1_BH_2019_diurnal_with_letters <- A_vs_time_july_1_BH_2019_diurna
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(-2,22,3), limits = c (-2,22)) 
@@ -413,7 +413,7 @@ significant_diffs <- results_df_A_diurnal_july_25_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 1  # Adjust this value based on your desired spacing
+vertical_offset <- 1.5  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -429,7 +429,7 @@ A_vs_time_july_25_BH_2019_diurnal_with_letters <- A_vs_time_july_25_BH_2019_diur
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(-2,22,3), limits = c (-2,22)) 
@@ -672,7 +672,7 @@ significant_diffs <- results_df_A_diurnal_july_28_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 1  # Adjust this value based on your desired spacing
+vertical_offset <- 1.5  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -688,7 +688,7 @@ A_vs_time_july_28_BH_2019_diurnal_with_letters <- A_vs_time_july_28_BH_2019_diur
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(-2,22,3), limits = c (-2,22)) 
@@ -868,14 +868,14 @@ significant_diffs <- results_df_A_diurnal_aug_1_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.9 # Adjust this value based on your desired spacing
+vertical_offset <- 1.1 # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
   arrange(interval, desc(letters_ordered.groups)) %>%  # Sort by interval and descending order of significance letters
   group_by(interval) %>%
   mutate(max_mean = max(mean),
-         y_position = max_mean + vertical_offset * (row_number() - 1))  # Ensure spacing starts from max_mean
+         y_position = max_mean + vertical_offset * (row_number() - 1.6))  # Ensure spacing starts from max_mean
 
 # Create the plot with letters of significance above the max mean points
 A_vs_time_aug_01_BH_2019_diurnal_with_letters <- A_vs_time_aug_01_BH_2019_diurnal +
@@ -884,7 +884,7 @@ A_vs_time_aug_01_BH_2019_diurnal_with_letters <- A_vs_time_aug_01_BH_2019_diurna
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(-2,22,3), limits = c (-2,22)) 
@@ -1714,7 +1714,7 @@ significant_diffs <- results_df_gsw_diurnal_july_1_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.03  # Adjust this value based on your desired spacing
+vertical_offset <- 0.04  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -1730,7 +1730,7 @@ gsw_vs_time_july_1_BH_2019_diurnal_with_letters <- gsw_vs_time_july_1_BH_2019_di
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(0,0.6,0.1), limits = c (0,0.6)) 
@@ -1908,7 +1908,7 @@ significant_diffs <- results_df_gsw_diurnal_july_25_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.03  # Adjust this value based on your desired spacing
+vertical_offset <- 0.04  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -1924,7 +1924,7 @@ gsw_vs_time_july_25_BH_2019_diurnal_with_letters <- gsw_vs_time_july_25_BH_2019_
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(0,0.6,0.1), limits = c (0,0.6)) 
@@ -2105,7 +2105,7 @@ significant_diffs <- results_df_gsw_diurnal_july_28_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.03  # Adjust this value based on your desired spacing
+vertical_offset <- 0.04  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -2121,7 +2121,7 @@ gsw_vs_time_july_28_BH_2019_diurnal_with_letters <- gsw_vs_time_july_28_BH_2019_
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(0,0.6,0.1), limits = c (0,0.6)) 
@@ -2302,7 +2302,7 @@ significant_diffs <- results_df_gsw_diurnal_aug_1_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.03  # Adjust this value based on your desired spacing
+vertical_offset <- 0.04  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -2318,7 +2318,7 @@ gsw_vs_time_aug_1_BH_2019_diurnal_with_letters <- gsw_vs_time_aug_1_BH_2019_diur
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(0,0.6,0.1), limits = c (0,0.6)) 
@@ -2944,7 +2944,7 @@ panel_plot_gas_exchange_time_HW1_july1_2019 <- plot_grid(
 )
 ggsave(panel_plot_gas_exchange_time_HW1_july1_2019  , filename = "figures/panel_plot_gas_exchange_time_HW1_july1_2019.pdf", device = cairo_pdf, width = 24, height = 13)
 
-
+ggsave(panel_plot_gas_exchange_time_HW1_july1_2019  , filename = "figures/panel_plot_gas_exchange_time_HW1_july1_2019.png", width = 24, height = 13)
 
 panel_plot_gas_exchange_time_HW2_2019 <- plot_grid(
   A_vs_time_aug_15_BH_2019_diurnal_with_letters,
@@ -5159,14 +5159,14 @@ significant_diffs <- results_df_A_diurnal_aug_13_bh_2020 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.9  # Adjust this value based on your desired spacing
+vertical_offset <- 1.2  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
   arrange(interval, desc(letters_ordered.groups)) %>%  # Sort by interval and descending order of significance letters
   group_by(interval) %>%
   mutate(max_mean = max(mean),
-         y_position = max_mean + vertical_offset * (row_number() - 1)) 
+         y_position = max_mean + vertical_offset * (row_number() - 1.2)) 
 
 # Create the plot with letters of significance above the max mean points
 A_vs_time_aug_13_BH_2020_diurnal_with_letters <- A_vs_time_aug_13_BH_2020_diurnal +
@@ -5355,14 +5355,14 @@ significant_diffs <- results_df_A_diurnal_aug_19_bh_2020 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.9  # Adjust this value based on your desired spacing
+vertical_offset <- 1.5  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
   arrange(interval, desc(letters_ordered.groups)) %>%  # Sort by interval and descending order of significance letters
   group_by(interval) %>%
   mutate(max_mean = max(mean),
-         y_position = max_mean + vertical_offset * (row_number() - 1)) 
+         y_position = max_mean + vertical_offset * (row_number() - 1.2)) 
 
 # Create the plot with letters of significance above the max mean points
 A_vs_time_aug_19_BH_2020_diurnal_with_letters <- A_vs_time_aug_19_BH_2020_diurnal +
@@ -5371,7 +5371,7 @@ A_vs_time_aug_19_BH_2020_diurnal_with_letters <- A_vs_time_aug_19_BH_2020_diurna
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(-2,22,3), limits = c (-2,22)) 
@@ -5550,14 +5550,14 @@ significant_diffs <- results_df_A_diurnal_aug_26_bh_2020 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.9  # Adjust this value based on your desired spacing
+vertical_offset <-1.5  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
   arrange(interval, desc(letters_ordered.groups)) %>%  # Sort by interval and descending order of significance letters
   group_by(interval) %>%
   mutate(max_mean = max(mean),
-         y_position = max_mean + vertical_offset * (row_number() - 1)) 
+         y_position = max_mean + vertical_offset * (row_number() - 1.2)) 
 
 # Create the plot with letters of significance above the max mean points
 A_vs_time_aug_26_BH_2020_diurnal_with_letters <- A_vs_time_aug_26_BH_2020_diurnal +
@@ -5566,7 +5566,7 @@ A_vs_time_aug_26_BH_2020_diurnal_with_letters <- A_vs_time_aug_26_BH_2020_diurna
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(-2,22,3), limits = c (-2,22)) 
@@ -5934,7 +5934,7 @@ significant_diffs <- results_df_gsw_diurnal_aug_19_bh_2020 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.03  # Adjust this value based on your desired spacing
+vertical_offset <- 0.04  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -5950,7 +5950,7 @@ gsw_vs_time_aug_19_BH_2020_diurnal_with_letters <- gsw_vs_time_aug_19_BH_2020_di
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(0,0.6,0.1), limits = c (0,0.6)) 
@@ -6126,7 +6126,7 @@ significant_diffs <- results_df_gsw_diurnal_aug_26_bh_2020 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.03  # Adjust this value based on your desired spacing
+vertical_offset <- 0.04  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -6142,7 +6142,7 @@ gsw_vs_time_aug_26_BH_2020_diurnal_with_letters <- gsw_vs_time_aug_26_BH_2020_di
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(0,0.6,0.1), limits = c (0,0.6)) 
@@ -6170,3 +6170,5 @@ panel_plot_gas_exchange_time_HW3_2020 <- plot_grid(
   axis = "tblr" 
 )
 ggsave(panel_plot_gas_exchange_time_HW3_2020  , filename = "figures/panel_plot_gas_exchange_time_HW3_2020.pdf", device = cairo_pdf, width = 18, height = 13)
+
+ggsave(panel_plot_gas_exchange_time_HW3_2020  , filename = "figures/panel_plot_gas_exchange_time_HW3_2020.png", width = 18, height = 13)

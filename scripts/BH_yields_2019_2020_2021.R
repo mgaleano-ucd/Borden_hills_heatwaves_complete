@@ -1484,3 +1484,124 @@ write.csv(anova_berry_diameter_2021,"BH_2021/data_output/anova_berry_diameter_20
 
 tukey_yield_berry_diameter_harvest_2021<-as.data.frame(test$groups)
 write.csv(tukey_yield_berry_diameter_harvest_2021,"BH_2021/data_output/tukey_yield_berry_diameter_harvest_2021.csv")
+
+
+####Berry weight 2021####
+
+
+  berry_weight_BH_2021<- read.csv("data/BH2021_sept08_berry_weight_harvest.csv", header =TRUE)
+str(berry_weight_BH_2021)  
+
+
+
+berry_weight_BH_2021<- berry_weight_BH_2021%>%
+  mutate(berry_weight_per_berry = berry_weight_g/berry_num)
+
+
+berry_weight_BH_2021$date<-as.factor(berry_weight_BH_2021$date)
+berry_weight_BH_2021$treatment<-as.character(berry_weight_BH_2021$treatment)
+
+str(berry_weight_BH_2021)
+
+
+berry_weight_per_berry_mean_2021<- berry_weight_BH_2021%>%
+  group_by(treatment)%>%
+  summarise(mean(berry_weight_per_berry))
+
+
+
+berry_weight_BH_2021_plot<-berry_weight_BH_2021%>%
+  ggplot(aes(treatment,berry_weight_per_berry))+
+  geom_boxplot(alpha =0.7, aes(fill = treatment))+
+  geom_point(alpha =0.9,position =pd2, aes(color = treatment, group =treatment, shape =treatment), size =2) +
+  scale_shape_manual(values = c(16,15,17),name = "Treatment", labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET" )) +
+  theme_classic()+
+  scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET"))+
+  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET"))+ 
+  ylab("Berry diameter (mm)") +
+  theme(plot.title = element_text(hjust = 0.5, size = 18, face = "bold", family = "serif")) +
+  xlab("Treatment") +
+  theme(axis.title.y = element_text(size=21, family = "serif")) +
+  theme(axis.title.x = element_text(size=21, family = "serif")) +
+  theme(legend.key.size = unit (0.5, "cm")) +
+  theme(legend.key.width = unit(0.2,"cm"))+
+  theme(legend.justification = "center")+
+  theme(legend.title.align = 0.5) +
+  scale_y_continuous (breaks=seq(0.8,1.4,0.2), limits = c (0.8,1.4)) +
+  scale_x_discrete(labels = c('Baseline (60% ET)', '1.5x baseline ET', '2x baseline ET'))+
+  theme(axis.text.x = element_text(size =18))+
+  theme(axis.text.y = element_text(size =18))
+
+ggsave(berry_weight_BH_2021_plot, filename = "figures/berry_weight_BH_2021_plot.pdf", device = cairo_pdf, 
+       width = 8, height = 6)
+
+
+#####ANOVA berry diameter
+berry_anova_2021<-berry_weight_BH_2021
+
+str(berry_anova_2021$berry_diameter) 
+
+berry_anova_2021 %>%
+  group_by(treatment)%>%
+  tally()
+
+berry_anova_2021<-berry_anova_2021%>%
+  select (treatment, berry_weight_per_berry)
+
+berry_anova_2021$treatment<- format(berry_anova_2021$treatment)
+berry_anova_2021$treatment<- as.factor(berry_anova_2021$treatment)
+
+
+berry_anova_2021 %>%
+  group_by(treatment)%>%
+  tally()
+
+se <- function(x) {
+  s <- sd(x)  # Calculate standard deviation
+  n <- length(x)  # Sample size
+  sqrt(s^2 / n)  # Calculate standard error
+}
+
+str(berry_anova_2021)
+variables<-c("berry_weight_per_berry")
+
+result_df_berry_weight_2021<- NULL
+
+for (variable in variables) {
+  anova_result <- aov(as.formula(paste(variable, "~ treatment")), data = berry_anova_2021)
+  p_value <- summary(anova_result)[[1]]$`Pr(>F)`[1]
+  p_value_df<-df <- data.frame(p_values = c(p_value,p_value,p_value))
+  tukey<-TukeyHSD(aov(as.formula(paste(variable, "~ treatment")), berry_anova_2021))
+  (test<- HSD.test(anova_result, trt = "treatment", alpha =0.05))
+  tukey_yield<-as.data.frame(test$groups)
+  mean_sd_harvest<-as.data.frame(test$means) 
+  mean_sd_harvest$Treatment<-c(1, 2, 3)
+  se_df <- berry_anova_2021 %>%
+    group_by(treatment) %>% 
+    summarise(sem = se(!!sym(variable)))
+  variable_result_df_1<-merge(mean_sd_harvest,
+                              tukey_yield, by = variable)
+  variable_result_df2<- cbind(variable_result_df_1,
+                              p_value_df)
+  ordered_df <- variable_result_df2[order(variable_result_df2$Treatment), ]
+  variable_result_df<- cbind(ordered_df, se_df)
+  variable_result_df <- variable_result_df %>%
+    mutate(Significance = case_when(
+      p_values < 0.001 ~ "***",
+      p_values < 0.01 ~ "**",
+      p_values < 0.05 ~ "*",
+      TRUE ~ ""
+    ))
+  # Decide which table to append based on the variable
+  if (variable == "berry_weight_per_berry") {
+    result_df_berry_weight_2021 <- variable_result_df
+  } 
+  else {
+    print(paste("Error processing", variable))
+  }
+}
+
+result_df_berry_weight_2021$Mean_sem <- paste(round(result_df_berry_weight_2021$berry_weight_per_berry, 2), "±", round(result_df_berry_weight_2021$sem, 2),result_df_berry_weight_2021$groups)
+
+
+write.csv(result_df_berry_weight_2021,"data_output/result_df_berry_weight_2021.csv")
