@@ -1166,3 +1166,4 @@ combined_daily_precipitation_bh<- ggplot(cumulative_irrigation, aes(x = Date, y 
 
 print(combined_daily_precipitation_bh)
 ggsave(combined_daily_precipitation_bh, filename = "figures/combined_daily_precipitation_bh.png", width = 23, height =12, dpi =300)
+
