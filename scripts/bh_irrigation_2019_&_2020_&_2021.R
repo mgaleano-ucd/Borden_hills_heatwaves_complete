@@ -54,20 +54,31 @@ irr_tmax_combined_2019_date_selection<- irr_tmax_combined_2019%>%
   filter(Date > "2019-05-15")%>%
   filter(Date<"2019-09-16")
 
+str(irr_tmax_combined_2019_date_selection)
+
+write.csv(irr_tmax_combined_2019_date_selection,"data_output/irr_tmax_combined_2019_date_selection.csv")
+
+
 
 daily_irr_tmax_2019_HW_plot_date_selection<- ggplot(irr_tmax_combined_2019_date_selection,aes(Date,gal_acre_day_irrigation, group = treatment, color = treatment)) +
   geom_line(alpha =0.7, size =1, linetype = "solid") +
-  geom_line(aes(y = Tmax*320),linetype ="dashed", color = "black")+
+ geom_line(aes(y = Tmax * 320, color = "Tmax", group = "Tmax"), linetype = "dashed") +
+# geom_line(aes(y = Tmax*320),linetype ="dashed", color = "black", group ="Tmax")+
   scale_y_continuous(sec.axis = sec_axis(~./320, name = "Maximum temperature (ºC)"),breaks=seq(0,15000,4000), limits = c (0,15000))+
   theme_classic()+
-  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET", "Tmax")) +
+#  ggtitle("2019")+
+  theme(plot.title = element_text(hjust = 0.5, size = 30, face = "bold", family = "serif")) + 
+  scale_color_manual(name = "Treatment",
+    values = c("#FDE725FF","#21908CFF","#440154FF" ,"black"),
+    labels = c("Baseline (60% ET)", "90-120% ET", "120-180% ET", "Tmax")) +
   ylab(label = "Daily applied irrigation (gallons/acre)") +
-  theme(plot.title = element_text(hjust = 0.5, size = 21, face = "bold", family = "serif")) +
   xlab("Date") +
   theme(axis.title.y = element_text(size=24, family = "serif")) +
   theme(axis.title.x = element_text(size=24, family = "serif")) +
-  theme(legend.key.size = unit (0.5, "cm")) +
-  theme(legend.key.width = unit(0.2,"cm"))+
+  theme(legend.key.size = unit (1, "cm")) +
+  theme(legend.key.width = unit(1,"cm"))+
+  theme(legend.text = element_text(size = 20),
+  legend.title = element_text(size = 22))+
   theme(legend.justification = "center")+
   theme(legend.position = "right") +
   theme(legend.title.align = 0)+
@@ -119,7 +130,7 @@ panel_plot_daily_irr_tmax_2019_with_pheno_bar<-plot_grid(daily_irr_tmax_2019_HW_
 rel_heights = c(4,0.4)
 )
 
-ggsave(panel_plot_daily_irr_tmax_2019_with_pheno_bar, filename = "figures/panel_plot_daily_irr_tmax_2019_2020_with_pheno_bar.pdf", device = cairo_pdf, width = 12, height =14)
+ggsave(panel_plot_daily_irr_tmax_2019_with_pheno_bar, filename = "figures/panel_plot_daily_irr_tmax_2019_with_pheno_bar.pdf", device = cairo_pdf, width = 12, height =14)
 
 
 ###Cumulative irrigation 2019 
@@ -314,8 +325,9 @@ daily_irr_tmax_2020_HW_plot_date_selection<-ggplot(irr_tmax_combined_2020_date_s
   geom_line(aes(y = tair_max * 320, linetype = "Tmax"), linetype = "dashed", color ="black") +
   scale_y_continuous(sec.axis = sec_axis(~./320, name = "Maximum temperature (ºC)"),breaks=seq(0,15000,4000), limits = c (0,15000))+
   theme_classic()+
+#  ggtitle("2020")+
+  theme(plot.title = element_text(hjust = 0.5, size = 30, face = "bold", family = "serif")) +
   ylab(label = "Daily applied irrigation (gallons/acre)") +
-  theme(plot.title = element_text(hjust = 0.5, size = 21, face = "bold", family = "serif")) +
   xlab("Date") +
   theme(axis.title.y = element_text(size=24, family = "serif")) +
   theme(axis.title.x = element_text(size=24, family = "serif")) +
@@ -341,7 +353,12 @@ daily_irr_tmax_2020_HW_plot_date_selection<-ggplot(irr_tmax_combined_2020_date_s
   annotate("text",  x = as.Date("2020-08-16", "%Y-%m-%d"), y = 14000, label ="HW3", size = 6)  +
   annotate("text",  x = as.Date("2020-09-07", "%Y-%m-%d"), y = 14000, label ="HW4", size = 6) +
   theme(legend.position = "none") +
-  theme(axis.title.y.left = element_text(color = "white"), axis.text.y.left = element_text(color = "white"), axis.ticks.y.left = element_blank()) 
+  theme(axis.title.y.left = element_text(color = "white"), axis.text.y.left = element_text(color = "white"), axis.ticks.y.left = element_blank()) +
+  theme(
+    axis.title.y.right = element_text(color = "white"),
+    axis.text.y.right =  element_text(color = "white"),
+    axis.ticks.y.right = element_blank())
+  
 
 
 
@@ -590,8 +607,7 @@ cumulative_irr_tmax_combined_2020 <-irr_tmax_combined_2020 %>%
   mutate(Cumulative_Irrigation_mm = cumsum(mm_per_day_acre))%>%
   mutate(Cumulative_Irrigation_mm_gallo = cumsum(mm_per_day_acre_gallo))
 
-##### %>%filter(Date > "2020-05-15")%>%
-#####  filter(Date< "2020-09-16")
+
 
 
 
@@ -855,9 +871,10 @@ daily_irr_tmax_2021_HW_plot_date_selection<-ggplot(irr_tmax_combined_2021_date_s
   geom_line(aes(y = tair_max*320),linetype ="dashed", color = "black")+
   scale_y_continuous(sec.axis = sec_axis(~./320, name = "Maximum temperature (ºC)"),breaks=seq(0,15000,4000), limits = c (0,15000))+
   theme_classic()+
-  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET", "Tmax")) +
+#  ggtitle("2021")+
+  theme(plot.title = element_text(hjust = 0.5, size = 30, face = "bold", family = "serif")) +
+  scale_color_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "90% ET", "120% ET", "Tmax")) +
   ylab(label = "Daily applied irrigation (gallons/acre)") +
-  theme(plot.title = element_text(hjust = 0.5, size = 21, face = "bold", family = "serif")) +
   xlab("Date") +
   theme(axis.title.y = element_text(size=24, family = "serif")) +
   theme(axis.title.x = element_text(size=24, family = "serif")) +
@@ -879,7 +896,8 @@ daily_irr_tmax_2021_HW_plot_date_selection<-ggplot(irr_tmax_combined_2021_date_s
            alpha = .2) +
   annotate("rect", xmin =  as.Date("2021-06-17", "%Y-%m-%d"), xmax = as.Date("2021-06-20", "%Y-%m-%d") , ymin = 0, ymax = 15000,
            alpha = .2)  +
-  theme(legend.position = "none") 
+  theme(legend.position = "none") +
+  theme(axis.title.y.left = element_text(color = "white"), axis.text.y.left = element_text(color = "white"), axis.ticks.y.left = element_blank()) 
 
 ggsave(daily_irr_tmax_2021_HW_plot_date_selection, filename = "figures/daily_irr_tmax_2021_HW_plot_date_selection.pdf", device = cairo_pdf, width = 13, height = 8)
 
@@ -933,7 +951,7 @@ ggsave(cumulative_irrigation_bh_2021_date_selection, filename = "figures/cumulat
 
 
 
-panel_plot_daily_irr_tmax_2021_with_pheno_bar<-plot_grid( daily_irr_tmax_2021_HW_plot_date_selection, phenological_bar_plot_2020, ncol = 1, rel_heights = c(4,0.6))
+panel_plot_daily_irr_tmax_2021_with_pheno_bar<-plot_grid( daily_irr_tmax_2021_HW_plot_date_selection, phenological_bar_plot_2020, ncol = 1, rel_heights = c(4,0.4))
 
 
 
@@ -1065,6 +1083,9 @@ combined_daily_precipitation_bh %>%
   group_by(Year) %>%
   summarize(Total_Precipitation_mm = sum(daily_rain_mm, na.rm = TRUE))
 
+
+
+
 panel_plot_cumulative_irr_bh_2019_2020_2021_with_daily_irrigation <- ggplot(cumulative_irrigation, aes(x = Date, y = Cumulative_Irrigation_mm_total, color = treatment)) +
   geom_line(size = 1, alpha = 0.8) +
   geom_point(size = 1.1, alpha = 0.6) +
@@ -1075,7 +1096,7 @@ panel_plot_cumulative_irr_bh_2019_2020_2021_with_daily_irrigation <- ggplot(cumu
   ) +
   geom_line(data = combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10), color = "blue", size = 0.5, alpha = 0.7) +
   geom_point(data = combined_daily_precipitation_bh, aes(x = Date, y = daily_rain_mm * 10), color = "blue", size = 1, alpha = 0.7)+
-  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET", "Precipation mm")) +
+  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET", "Precipation mm")) +
   ylab("Cumulative irrigation (mm)") +
   xlab("Date") +
   scale_x_date(date_labels = "%b %Y", breaks = seq.Date(min(combined_daily_precipitation_bh$Date, na.rm = TRUE), max(combined_daily_precipitation_bh$Date, na.rm = TRUE), by = "1.8 months")) +
@@ -1125,7 +1146,7 @@ combined_daily_precipitation_bh<- ggplot(cumulative_irrigation, aes(x = Date, y 
   theme_classic() +
   scale_colour_manual(values = c(scales::viridis_pal(direction = -1, begin = 0.05, end = 0.93)(3), "blue"), 
                       name = "Legend", 
-                      labels = c("Baseline (60% ET)", "1.5x baseline ET", "2x baseline ET", "Daily Precipitation")) +
+                      labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET", "Daily Precipitation")) +
   ylab("Cumulative irrigation (mm)") +
   xlab("Date") +
   scale_x_date(date_labels = "%b %Y", breaks = seq.Date(min(combined_daily_precipitation_bh$Date, na.rm = TRUE), max(combined_daily_precipitation_bh$Date, na.rm = TRUE), by = "1.8 months")) +
@@ -1167,3 +1188,383 @@ combined_daily_precipitation_bh<- ggplot(cumulative_irrigation, aes(x = Date, y 
 print(combined_daily_precipitation_bh)
 ggsave(combined_daily_precipitation_bh, filename = "figures/combined_daily_precipitation_bh.png", width = 23, height =12, dpi =300)
 
+#### Total irrigation 2019 -2020 -2021 - all treatments ####
+
+str(irr_tmax_combined_2019)
+total_rrigation_bh_2019<-irr_tmax_combined_2019  %>%
+  arrange(Date) %>%
+  group_by(treatment) %>%
+  mutate(mm_per_day_acre = (gal_acre_day_irrigation/1076.39))%>%
+  mutate(mm_per_day_acre_gallo = (((hours*0.75)*((43560/60)/325851)*304.8)))%>%
+  mutate(mm_per_day_hectare = (mm_per_day_acre*2.47105))
+
+irr_tmax_combined_2019_total<- total_rrigation_bh_2019%>%
+  group_by(treatment)%>%
+  summarise(Total_mm_per_day = sum(mm_per_day_acre,na.rm =TRUE), Total_gal_acre_day_irrigation = sum(gal_acre_day_irrigation,na.rm = TRUE))%>%
+  mutate(year ="2019")
+
+
+bh_total_irrigation_2020<-bh_irrigation_2020_complete_season%>%
+  mutate(mm_per_day_hectare = (gal_acre_day_irrigation/2642.00792602))%>%
+  mutate(mm_per_day_acre_gallo = (((hours*0.75)*((43560/60)/325851)*304.8)))%>%
+  mutate(mm_per_day_acre = (gal_acre_day_irrigation/1069.10429702))
+
+
+irr_tmax_combined_2020_total<- bh_total_irrigation_2020%>%
+  group_by(treatment)%>%
+  summarise(Total_mm_per_day = sum(mm_per_day_acre,na.rm =TRUE), Total_gal_acre_day_irrigation = sum(gal_acre_day_irrigation,na.rm = TRUE))%>%
+  mutate(year = "2020")
+
+bh_total_irrigation_2021<-irr_tmax_combined_2021%>%
+  mutate(mm_per_day_acre = (gal_acre_day_irrigation/1076.39))%>%
+  mutate(mm_per_day_acre_gallo = (((hours*0.75)*((43560/60)/325851)*304.8)))
+
+
+irr_tmax_combined_2021_total<- bh_total_irrigation_2021%>%
+  group_by(treatment)%>%
+  summarise(Total_mm_per_day = sum(mm_per_day_acre,na.rm =TRUE), Total_gal_acre_day_irrigation = sum(gal_acre_day_irrigation,na.rm = TRUE))%>%
+  mutate(year = "2021")
+  
+####Add daily precipations to the cumulative irrigation plot####
+
+bh_pp_2019<-read.csv("data/bh_precipation_2019.csv")
+bh_pp_2020<-read.csv("data/bh_precipitation_2020.csv")
+bh_pp_2021<-read.csv("data/bh_precipitation_2021.csv")
+str(bh_pp_2019)
+str(bh_pp_2020)
+str(bh_pp_2021)
+
+bh_daily_precipitation_2020 <-  bh_pp_2020 %>%
+  group_by(DOY) %>%
+  summarize(daily_rain_mm = sum(rain_mm, na.rm = TRUE)) %>%
+  mutate(Date = ymd(paste(2020, 1, 1, sep = "-")) + days(DOY - 1))%>%
+  filter(!daily_rain_mm<0)
+
+
+bh_daily_precipitation_2021 <-  bh_pp_2021 %>%
+  group_by(DOY) %>%
+  summarize(daily_rain_mm = sum(rain_mm, na.rm = TRUE))%>%
+  mutate(Date = ymd(paste(2021, 1, 1, sep = "-")) + days(DOY - 1))%>%
+  filter(!daily_rain_mm<0)
+
+str(bh_daily_precipitation_2021)
+# Create a complete sequence of dates for the year 2021
+complete_dates <- data.frame(Date = seq.Date(as.Date("2021-01-01"), as.Date("2021-12-31"), by = "day"))
+
+# Merge with the original data frame, filling missing values with zero
+bh_daily_precipitation_2021<- complete_dates %>%
+  left_join(bh_daily_precipitation_2021, by = "Date") %>%
+  mutate(daily_rain_mm = ifelse(is.na(daily_rain_mm), 0, daily_rain_mm))
+
+str(bh_daily_precipitation_2021)
+
+bh_daily_precipitation_2019<-bh_pp_2019 %>%
+  mutate(Date = DATE_)%>%
+  mutate(daily_rain_mm =rain_mm)
+
+bh_daily_precipitation_2019$Date<-mdy(bh_daily_precipitation_2019$Date)
+
+str(bh_daily_precipitation_2019$Date)
+
+combined_daily_precipitation_bh <- bind_rows(
+  bh_daily_precipitation_2019, bh_daily_precipitation_2020, bh_daily_precipitation_2021
+)%>%
+  select(Date, daily_rain_mm)
+
+str(combined_daily_precipitation_bh)
+
+
+combined_daily_precipitation_bh %>%
+  mutate(Year = format(Date, "%Y")) %>%
+  group_by(Year) %>%
+  summarize(Total_Precipitation_mm = sum(daily_rain_mm, na.rm = TRUE))
+
+total_precipitation_per_year_bh<-combined_daily_precipitation_bh%>%
+  mutate(Year = format(Date, "%Y")) %>%  # Extract year from Date
+  group_by(Year) %>%                     # Group by year
+  summarise(total_rain_mm = sum(daily_rain_mm, na.rm = TRUE))  # Sum rainfall for each year
+
+Total_irrigation_all_years_bh<-rbind(irr_tmax_combined_2019_total,irr_tmax_combined_2020_total, irr_tmax_combined_2021_total)
+
+str(total_precipitation_per_year_bh)
+
+Total_irrigation_all_years_bh <- left_join(total_precipitation_per_year_bh, Total_irrigation_all_years_bh, by = c("Year" = "year"))
+
+
+str(Total_irrigation_all_years_bh)
+Total_irrigation_all_years_bh$Year<-as_factor(Total_irrigation_all_years_bh$Year)
+Total_irrigation_all_years_bh$treatment<-as.character(Total_irrigation_all_years_bh$treatment)
+
+str(Total_irrigation_all_years_bh)
+
+
+write.csv(Total_irrigation_all_years_bh,"data_output/Total_irrigation_all_years_bh.csv")
+
+library(scales)
+
+total_irrigation_gal_acre_bh_all_years_plot<-ggplot(Total_irrigation_all_years_bh, aes(x = Year, y = Total_gal_acre_day_irrigation, fill = treatment)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "120-90% ET", "180-120% ET")) +
+  labs(
+    x = "Year",
+    y = "Total irrigation (gallons/acre)"
+  ) +
+  theme_classic() +
+theme(axis.title.y = element_text(size=24, family = "serif")) +
+  theme(axis.title.x = element_text(size=24, family = "serif")) +
+  theme(legend.justification = "center")+
+  theme(legend.position = "right") +
+  theme(legend.title.align = 0)+
+  theme(axis.text.x = element_text(size =18))+
+  theme(axis.text.y = element_text(size =18))+
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14))+
+  scale_y_continuous(labels = label_comma())
+
+ggsave(total_irrigation_gal_acre_bh_all_years_plot, filename = "figures/total_irrigation_gal_acre_bh_all_years_plot.jpg", width = 14, height =10, dpi =600)
+
+
+total_irrigation_mm_bh_all_years_plot<-ggplot(Total_irrigation_all_years_bh, aes(x = Year, y = Total_mm_per_day, fill = treatment)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "120-90% ET", "180-120% ET")) +
+  labs(
+    x = "Year",
+    y = "Total irrigation (mm)"
+  ) +
+  theme_classic() +
+  theme(axis.title.y = element_text(size=24, family = "serif")) +
+  theme(axis.title.x = element_text(size=24, family = "serif")) +
+  theme(legend.justification = "center")+
+  theme(legend.position = "right") +
+  theme(legend.title.align = 0)+
+  theme(axis.text.x = element_text(size =18))+
+  theme(axis.text.y = element_text(size =18))+
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14))
+
+ggsave(total_irrigation_mm_bh_all_years_plot, filename = "figures/total_irrigation_mm_bh_all_years_plot.jpg", width = 14, height =10, dpi =600)
+
+library(viridis)
+fill_colors <- viridis(n = 3, direction = -1, begin = 0.05, end = 0.93)
+
+
+# Print the hex colors
+print(fill_colors)
+
+colors <- viridis(n = 3, direction = -1, begin = 0.05, end = 0.93)
+
+# Print the hex colors
+print(colors)
+
+
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+# Create a version of the dataframe that differentiates between rain and irrigation
+combined_df <- Total_irrigation_all_years_bh %>%
+  mutate(treatment = as.factor(treatment)) %>%
+  group_by(Year) %>%
+  summarise(
+    total_rain_mm = first(total_rain_mm),  # Keep only one rain value per year
+    treatment_1_irrigation = sum(Total_mm_per_day[treatment == "1"]),
+    treatment_2_irrigation = sum(Total_mm_per_day[treatment == "2"]),
+    treatment_3_irrigation = sum(Total_mm_per_day[treatment == "3"])
+  ) %>%
+  pivot_longer(
+    cols = c(treatment_1_irrigation, treatment_2_irrigation, treatment_3_irrigation, total_rain_mm),
+    names_to = "type",
+    values_to = "mm_value"
+  ) %>%
+  # Reorder the 'type' column so that total_rain_mm appears last
+  mutate(type = factor(type, levels = c("treatment_1_irrigation", "treatment_2_irrigation", "treatment_3_irrigation", "total_rain_mm")))
+
+# Create the plot
+total_irrigation_rain_mm_plot <- ggplot(combined_df, aes(x = Year, y = mm_value, fill = type)) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+  scale_fill_manual(
+    values = c("treatment_1_irrigation" = "#FDE725FF",  #FDE725FF# Viridis colors for treatments
+               "treatment_2_irrigation" = "#21908CFF",
+               "treatment_3_irrigation" = "#440154FF",
+               "total_rain_mm" = "blue"),               # Blue for rainfall
+    labels = c("Baseline (60% ET)", "120-90% ET", "180-120% ET", "Rainfall")
+  ) +
+  labs(
+    x = "Year",
+    y = "Total irrigation/rain (mm)",
+    fill = "Type"
+  ) +
+  theme_classic() +
+  theme(axis.title.y = element_text(size=24, family = "serif")) +
+  theme(axis.title.x = element_text(size=24, family = "serif")) +
+  theme(legend.justification = "center") +
+  theme(legend.position = "right") +
+  theme(legend.title.align = 0) +
+  theme(axis.text.x = element_text(size = 18)) +
+  theme(axis.text.y = element_text(size = 18)) +
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14)) +
+  scale_y_continuous(labels = scales::label_comma())
+
+# Print the plot
+print(total_irrigation_rain_mm_plot)
+
+# Save the plot
+ggsave("figures/total_irrigation_rain_mm_per_year_plot.jpg", total_irrigation_rain_mm_plot, width = 14, height = 10, dpi = 600)
+
+
+library(dplyr)
+library(lubridate)
+
+# Assume your data frame is called 'rainfall_data' with columns 'Date' and 'daily_rain_mm'
+
+# Create a custom year that runs from October of one year to October of the next year
+rainfall_data_custom_year <- combined_daily_precipitation_bh %>%
+  mutate(custom_year = if_else(month(Date) >= 10, year(Date), year(Date) - 1))  # If month is Oct-Dec, keep the year, else subtract 1
+
+# Now, group by this custom year and sum the rainfall
+
+bh_rainfal_2018_oct_dec<-read.csv("data/bh_oct_nov_dec_rainfall_2018.csv", header = TRUE)
+str(bh_rainfal_2018_oct_dec)
+
+bh_rainfal_2018_oct_dec$Date<-mdy(bh_rainfal_2018_oct_dec$Date)
+
+
+str(rainfall_data_custom_year)
+
+
+rainfall_data_custom_year_with_2018<-bind_rows(rainfall_data_custom_year,bh_rainfal_2018_oct_dec)
+
+rainfall_by_custom_year <- rainfall_data_custom_year_with_2018 %>%
+  group_by(custom_year) %>%
+  summarise(total_rain_mm = sum(daily_rain_mm, na.rm = TRUE))
+
+
+
+
+# View the result
+print(rainfall_by_custom_year)
+
+
+df_adjusted <- rainfall_by_custom_year %>%
+  filter(custom_year != "2021")  %>%
+  mutate(custom_year = case_when(
+    custom_year == "2018" ~ "2019",
+    custom_year == "2019" ~ "2020",
+    custom_year == "2020" ~ "2021",
+    TRUE ~ as.character(custom_year)
+  ))
+
+
+df_adjusted <- df_adjusted %>%
+  rename(Year = custom_year)
+
+Total_irrigation_all_years_bh<-rbind(irr_tmax_combined_2019_total,irr_tmax_combined_2020_total, irr_tmax_combined_2021_total)
+
+
+Total_irrigation_all_years_bh_oct_oct <- left_join(df_adjusted, Total_irrigation_all_years_bh, by = c("Year" = "year"))
+
+str(Total_irrigation_all_years_bh_oct_oct)
+
+write.csv(Total_irrigation_all_years_bh_oct_oct,"data_output/Total_irrigation_all_years_bh_oct_oct.csv")
+
+combined_df <- Total_irrigation_all_years_bh_oct_oct %>%
+  mutate(treatment = as.factor(treatment)) %>%
+  group_by(Year) %>%
+  summarise(
+    total_rain_mm = first(total_rain_mm),  # Keep only one rain value per year
+    treatment_1_irrigation = sum(Total_mm_per_day[treatment == "1"]),
+    treatment_2_irrigation = sum(Total_mm_per_day[treatment == "2"]),
+    treatment_3_irrigation = sum(Total_mm_per_day[treatment == "3"])
+  ) %>%
+  pivot_longer(
+    cols = c(treatment_1_irrigation, treatment_2_irrigation, treatment_3_irrigation, total_rain_mm),
+    names_to = "type",
+    values_to = "mm_value"
+  ) %>%
+  # Reorder the 'type' column so that total_rain_mm appears last
+  mutate(type = factor(type, levels = c("treatment_1_irrigation", "treatment_2_irrigation", "treatment_3_irrigation", "total_rain_mm")))
+
+# Create the plot
+total_irrigation_rain_mm_plot_oct_to_oct_rain <- ggplot(combined_df, aes(x = Year, y = mm_value, fill = type)) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+  scale_fill_manual(
+    values = c("treatment_1_irrigation" = "#FDE725FF",  #FDE725FF# Viridis colors for treatments
+               "treatment_2_irrigation" = "#21908CFF",
+               "treatment_3_irrigation" = "#440154FF",
+               "total_rain_mm" = "blue"),               # Blue for rainfall
+    labels = c("Baseline (60% ET)", "120-90% ET", "180-120% ET", "Rainfall")
+  ) +
+  labs(
+    x = "Year",
+    y = "Total irrigation/rain (mm)",
+    fill = "Type"
+  ) +
+  theme_classic() +
+  theme(axis.title.y = element_text(size=24, family = "serif")) +
+  theme(axis.title.x = element_text(size=24, family = "serif")) +
+  theme(legend.justification = "center") +
+  theme(legend.position = "right") +
+  theme(legend.title.align = 0) +
+  theme(axis.text.x = element_text(size = 18)) +
+  theme(axis.text.y = element_text(size = 18)) +
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14)) +
+  scale_y_continuous(labels = scales::label_comma())
+
+# Print the plot
+print(total_irrigation_rain_mm_plot_oct_to_oct_rain)
+
+# Save the plot
+ggsave("figures/total_irrigation_rain_mm_plot_oct_to_oct_rain.jpg", total_irrigation_rain_mm_plot_oct_to_oct_rain, width = 14, height = 10, dpi = 600)
+
+######Supplemental figure new phytologist #####
+
+
+
+
+
+legend <- get_legend(daily_irr_tmax_2019_HW_plot_date_selection)
+
+ggsave(legend, filename = "figures/legend.jpg", width = 3, height =1.5, dpi =600)
+
+
+panel_plot_irrigation_bh_2019_2020_2021 <- plot_grid(
+plot_grid(panel_plot_daily_irr_tmax_2019_with_pheno_bar, panel_plot_daily_irr_tmax_2020_with_pheno_bar,panel_plot_daily_irr_tmax_2021_with_pheno_bar, legend, labels = c("a", "b", "c"),ncol = 1, 
+          vjust = 1.5, 
+          hjust = -9.6, 
+          label_size = 28,
+          align = "v", axis = "l")
+)
+
+panel_plot_irrigation_bh_2019_2020_2021 <- plot_grid(
+  plot_grid(
+    panel_plot_daily_irr_tmax_2019_with_pheno_bar, 
+    panel_plot_daily_irr_tmax_2020_with_pheno_bar, 
+    panel_plot_daily_irr_tmax_2021_with_pheno_bar, 
+    labels = c("a", "b", "c"),
+    ncol = 1, 
+    vjust = 1.5, 
+    hjust = -9.6, 
+    label_size = 28,
+    align = "v", 
+    axis = "l",
+    rel_heights = c(1, 1, 1)  # Adjust this to control relative heights of panels
+  ),
+  legend,  # Add the legend as a separate element
+  ncol = 2,  # Layout: 2 columns (3 plots and 1 legend)
+  rel_widths = c(4, 1)  # Increase the width for the legend
+)
+
+
+ggsave(panel_plot_irrigation_bh_2019_2020_2021, filename = "figures/panel_plot_irrigation_bh_2019_2020_2021.pdf", device = cairo_pdf, width = 24, height =22)
+
+
+ggsave(panel_plot_irrigation_bh_2019_2020_2021, filename = "figures/panel_plot_irrigation_bh_2019_2020_2021.jpg", width = 20, height =30, dpi =600)
+
+legend_figure_2 <- get_legend(daily_irr_tmax_2019_HW_plot_date_selection)
+
+legend_plot <- ggdraw(legend_figure_2)
+
+ggsave(legend_plot, filename = "figures/legend_figure_2.jpg", width = 4, height =4, dpi =600)

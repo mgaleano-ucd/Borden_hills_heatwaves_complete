@@ -225,9 +225,11 @@ write.csv(result_df_TA_2020,"data_output/result_df_TA_2020_anova_harvest.csv")
 ###### ANOVA BERRY PRIMARY CHEMISTRY 2021 AT HARVEST####
 
 berry_chemistry_borden_hills_2021 <-read.csv("data/borden_hills_berry_chemistry_2021.csv", header = TRUE)
+bh_TA_2021_harvest<-read.csv("data/bh_2021_TA_harvest.csv", header =TRUE)
+
 
 str(berry_chemistry_borden_hills_2021)
-
+str(bh_TA_2021_harvest)
 
 berry_chemistry_borden_hills_2021_avg_se <-berry_chemistry_borden_hills_2021 %>%
   group_by(treatment) %>%
@@ -235,7 +237,7 @@ berry_chemistry_borden_hills_2021_avg_se <-berry_chemistry_borden_hills_2021 %>%
 
 
 
-write.csv(berry_chemistry_borden_hills_2021_avg_se,"BH_2021/data_output/berry_chemistry_borden_hills_2021_avg_se.csv")
+write.csv(berry_chemistry_borden_hills_2021_avg_se,"data_output/berry_chemistry_borden_hills_2021_avg_se.csv")
 
 berry_chemistry_borden_hills_2021 %>%
   group_by(treatment) %>%
@@ -246,9 +248,14 @@ berry_chemistry_borden_hills_2021 %>%
 berry_chemistry_borden_hills_2021 <- berry_chemistry_borden_hills_2021%>%
   select(Brix,pH, treatment) 
 
+
+str(berry_chemistry_borden_hills_2021)
+
+# Verify the number of replicates per treatment
 berry_chemistry_borden_hills_2021 %>%
-  group_by(treatment)%>%
+  group_by(treatment) %>%
   tally()
+
 
 is.factor(berry_chemistry_borden_hills_2021$treatment)
 
@@ -271,6 +278,7 @@ variables<-c("Brix", "pH")
 
 result_df_brix_2021 <- NULL
 result_df_pH_2021 <- NULL
+
 
 for (variable in variables) {
   anova_result <- aov(as.formula(paste(variable, "~ treatment")), data = berry_chemistry_borden_hills_2021)
@@ -302,6 +310,8 @@ for (variable in variables) {
     result_df_brix_2021 <- variable_result_df
   } else if (variable == "pH") {
     result_df_pH_2021 <- variable_result_df
+  } else if (variable == "TA") {
+    result_df_TA_2021 <- variable_result_df
   }
   else {
     print(paste("Error processing", variable))
@@ -318,4 +328,68 @@ write.csv(result_df_brix_2021,"BH_2021/data_output/result_df_brix_2021_anova_har
 write.csv(result_df_pH_2021,"BH_2021/data_output/result_df_pH_2021_anova_harvest.csv")
 
 
+
+##### Anova 2021 TA
+
+bh_TA_2021_harvest <- bh_TA_2021_harvest%>%
+  select(TA, treatment) 
+
+bh_TA_2021_harvest %>%
+  group_by(treatment)%>%
+  tally()
+
+is.factor(bh_TA_2021_harvest$treatment)
+
+bh_TA_2021_harvest$treatment<- format(bh_TA_2021_harvest$treatment)
+bh_TA_2021_harvest$treatment<- as.factor(bh_TA_2021_harvest$treatment)
+
+is.factor(bh_TA_2021_harvest$treatment)
+
+str(bh_TA_2021_harvest)
+
+
+se <- function(x) {
+  s <- sd(x)  # Calculate standard deviation
+  n <- length(x)  # Sample size
+  sqrt(s^2 / n)  # Calculate standard error
+}
+
+str(bh_TA_2021_harvest)
+
+  anova_result <- aov((TA~ treatment), data = bh_TA_2021_harvest)
+  p_value <- summary(anova_result)[[1]]$`Pr(>F)`[1]
+  p_value_df<-df <- data.frame(p_values = c(p_value,p_value,p_value))
+  tukey<-TukeyHSD(aov((TA ~ treatment), bh_TA_2021_harvest))
+  (test<- HSD.test(anova_result, trt = "treatment", alpha =0.05))
+  tukey_yield<-as.data.frame(test$groups)
+  mean_sd_harvest<-as.data.frame(test$means) 
+  mean_sd_harvest$Treatment<-c(1, 2, 3)
+  se_df <- bh_TA_2021_harvest %>%
+    group_by(treatment) %>% 
+    summarise(sem = se(TA))
+  
+  variable_result_df_1<-merge(mean_sd_harvest,
+                              tukey_yield, by = "TA")
+  
+  variable_result_df_1 <- unique(variable_result_df_1)
+  variable_result_df_1 <- distinct(variable_result_df_1)
+  variable_result_df_1 <- variable_result_df_1 %>%
+    distinct(treatment, .keep_all = TRUE)
+  
+  variable_result_df2<- cbind(variable_result_df_1,
+                              p_value_df)
+  ordered_df <- variable_result_df2[order(variable_result_df2$Treatment), ]
+  variable_result_df<- cbind(ordered_df, se_df)
+  variable_result_df <- variable_result_df %>%
+    mutate(Significance = case_when(
+      p_values < 0.001 ~ "***",
+      p_values < 0.01 ~ "**",
+      p_values < 0.05 ~ "*",
+      TRUE ~ ""
+    ))
+    result_df_TA_2021 <- variable_result_df
+
+result_df_TA_2021$Mean_sem <- paste(round(result_df_TA_2021$TA, 2), "±", round(result_df_TA_2021$sem, 2),result_df_TA_2021$groups)
+
+write.csv(result_df_TA_2021,"data_output/result_df_TA_2021_anova_harvest.csv")
 

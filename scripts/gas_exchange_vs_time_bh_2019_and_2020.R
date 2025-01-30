@@ -957,14 +957,20 @@ print(max_A_combined)
 
 diurnals_2019_A_vs_time_aug15<- diurnals_2019_F_vs_round %>%
   filter(!is.na(A))%>%
-  select(datetime, day, A, pixel_number, round, treatment, Rep) %>%
-  filter(day == "227") 
+  select(datetime, day, A, pixel_number, round, treatment, Rep, BH_Vine, BH_Block, BH_Leaf) %>%
+  filter(day == "227") %>%
+  mutate(interval = case_when(
+    round == 1 ~ "8/15/2019 5:30",
+    round == 2 ~ "8/15/2019 9:00",
+    round == 3 ~ "8/15/2019 11:30", 
+    round == 4 ~ "8/15/2019 13:30",
+    round == 5 ~ "8/15/2019 17:00"
+  )) 
 
-diurnals_2019_A_vs_time_aug15$interval <-cut(diurnals_2019_A_vs_time_aug15$datetime, breaks= "139 min", labels = c ("08-15-2019 6:00", "08-15-2019 9:00","08-15-2019 11:15", "08-15-2019 13:30", "08-15-2019 17:00", "08-15-2019 17:00"))
 
 str(diurnals_2019_A_vs_time_aug15$interval)
 
-
+diurnals_2019_A_vs_time_aug15$interval<-mdy_hm(diurnals_2019_A_vs_time_aug15$interval)
 diurnals_2019_A_vs_time_aug15 %>%
   group_by(interval, treatment, round) %>%
   tally()
@@ -980,11 +986,7 @@ str(diurnals_2019_A_vs_time_aug15$Rep)
 str(diurnals_2019_A_vs_time_aug15$interval)
 
 
-diurnals_2019_A_vs_time_aug15$interval<-as.character(diurnals_2019_A_vs_time_aug15$interval)
 
-diurnals_2019_A_vs_time_aug15$interval<-format(diurnals_2019_A_vs_time_aug15$interval)
-
-diurnals_2019_A_vs_time_aug15$interval<-as.POSIXct(diurnals_2019_A_vs_time_aug15$interval, format = "%m-%d-%Y %H:%M")
 
 str(diurnals_2019_A_vs_time_aug15$interval)
 
@@ -999,10 +1001,42 @@ diurnals_2019_A_vs_time_aug15_anova_tally<-diurnals_2019_A_vs_time_aug15_anova%>
   group_by(interval, treatment)%>%
   tally() 
 
+write.csv(diurnals_2019_A_vs_time_aug15_anova_tally,"data_output/diurnals_2019_A_vs_time_aug15_anova_tally.csv")
+
+
+
+remove_outliers_iqr_by_treatment_interval <- function(data) {
+  data %>%
+    group_by(treatment, interval) %>%  # Group by treatment
+    filter({
+      Q1 <- quantile(A, 0.25, na.rm = TRUE)
+      Q3 <- quantile(A, 0.75, na.rm = TRUE)
+      IQR <- Q3 - Q1
+      
+      lower_bound <- Q1 - 1.5 * IQR
+      upper_bound <- Q3 + 1.5 * IQR
+      
+      A >= lower_bound & A <= upper_bound
+    }) %>%
+    ungroup()  # Ungroup after filtering
+}
+
+diurnals_2019_A_vs_time_aug15_anova <- diurnals_2019_A_vs_time_aug15_anova %>%
+  do(remove_outliers_iqr_by_treatment_interval(.)) %>%  # Apply the outlier removal function
+  ungroup()  # Ungroup the data frame
+
+
+diurnals_2019_A_vs_time_aug15_anova_tally_no_outliers<-diurnals_2019_A_vs_time_aug15_anova%>%
+  group_by(interval, treatment)%>%
+  tally() 
+
+
+write.csv(diurnals_2019_A_vs_time_aug15_anova_tally_no_outliers,"data_output/diurnals_2019_A_vs_time_aug15_anova_tally_no_outliers.csv")
+
 diurnals_2019_A_vs_time_aug15_anova$treatment <- as.factor(diurnals_2019_A_vs_time_aug15_anova$treatment)
 
 str(diurnals_2019_A_vs_time_aug15_anova$treatment)
-
+str(diurnals_2019_A_vs_time_aug15_anova)
 
 # Initialize an empty data frame to store results
 intervals <- unique(diurnals_2019_A_vs_time_aug15_anova$interval) 
@@ -1021,7 +1055,7 @@ for (current_interval in intervals) {
   data_subset$treatment <- as.factor(data_subset$treatment)
   
   # Perform one-way ANOVA
-  anova_result <- aov(A ~ treatment, data = data_subset)
+  anova_result <- aov(A ~ treatment/BH_Vine, data = data_subset)
   
   # Perform Tukey's HSD test
   tukey_result <- HSD.test(anova_result , trt = "treatment", alpha =0.05, unbalanced = "TRUE")
@@ -1055,7 +1089,7 @@ for (current_interval in intervals) {
   results_df_A_diurnal_aug_15_bh_2019 <- rbind(interval_results,results_df_A_diurnal_aug_15_bh_2019)
 }
 
-results_df_A_diurnal_aug_15_bh_2019$interval <- as.POSIXct(results_df_A_diurnal_aug_15_bh_2019$interval, format = "%m-%d-%Y %H:%M")
+results_df_A_diurnal_aug_15_bh_2019$interval <- as.POSIXct(results_df_A_diurnal_aug_15_bh_2019$interval, format = "%m-%d-%Y %H:%M",tz = "UTC")
 
 # Check the structure to confirm the conversion
 str(results_df_A_diurnal_aug_15_bh_2019$interval)
@@ -1074,15 +1108,15 @@ pd<- position_dodge(1400)
 A_vs_time_aug_15_BH_2019_diurnal<-
   ggplot(results_df_A_diurnal_aug_15_bh_2019, aes(x = interval, y = mean, group = treatment, color =treatment)) +
   geom_point(position = position_dodge(width = 0.8), size = 3, alpha =0.6) + 
+  geom_line(alpha =0.6, size =1.1, linetype = "solid", stat = "identity") +
   geom_errorbar(aes(ymin = mean - standard_error, ymax = mean + standard_error), 
                 position = position_dodge(width = 1), size =1.1, width = 3800, alpha =0.6) +
-  geom_line(alpha =0.6, size =1.1, linetype = "solid", stat = "identity") +
   scale_shape_manual(values = c(16,15,17), name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET")) +
   scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
   theme_classic() +
   scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
   ylab(expression(Net~photosynthesis~(µmol~m^{-2}~s^{-1}))) +
-  ggtitle("August 15 2019") +
+  ggtitle("HW2 2019") +
   theme(plot.title = element_text(hjust = 0.5, size = 23, face = "bold", family = "serif")) +
   xlab("Time") +
   theme(axis.title.y = element_text(size=23, family = "serif")) +
@@ -1121,14 +1155,14 @@ significant_diffs <- results_df_A_diurnal_aug_15_bh_2019 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.9  # Adjust this value based on your desired spacing
+vertical_offset <- 1.2  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
   arrange(interval, desc(letters_ordered.groups)) %>%  # Sort by interval and descending order of significance letters
   group_by(interval) %>%
   mutate(max_mean = max(mean),
-         y_position = max_mean + vertical_offset * (row_number() - 1)) 
+         y_position = max_mean + vertical_offset * (row_number() - 0.4)) 
 
 # Create the plot with letters of significance above the max mean points
 A_vs_time_aug_15_BH_2019_diurnal_with_letters <- A_vs_time_aug_15_BH_2019_diurnal +
@@ -1137,7 +1171,7 @@ A_vs_time_aug_15_BH_2019_diurnal_with_letters <- A_vs_time_aug_15_BH_2019_diurna
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(-2,22,3), limits = c (-2,22)) 
@@ -2335,16 +2369,23 @@ ggsave(gsw_vs_time_aug_1_BH_2019_diurnal_with_letters, filename = "figures/gsw_v
 
 diurnals_2019_gsw_vs_time_aug15<- diurnals_2019_F_vs_round %>%
   filter(!is.na(gsw))%>%
-  select(datetime, day, gsw, pixel_number, round, treatment, Rep) %>%
+  select(datetime, day, gsw, pixel_number, round, treatment, Rep, BH_Vine, BH_Block, BH_Leaf) %>%
   filter(day == "227")%>%
-  filter(gsw < 2)
+  mutate(interval = case_when(
+    round == 1 ~ "8/15/2019 5:30",
+    round == 2 ~ "8/15/2019 9:00",
+    round == 3 ~ "8/15/2019 11:30", 
+    round == 4 ~ "8/15/2019 13:30",
+    round == 5 ~ "8/15/2019 17:00"
+  )) 
 
+#%>%
+#  filter(gsw < 2)
 
-diurnals_2019_gsw_vs_time_aug15$interval <-cut(diurnals_2019_gsw_vs_time_aug15$datetime, breaks= "140 min", labels = c ("08-15-2019 6:00", "08-15-2019 9:00","08-15-2019 11:15", "08-15-2019 13:30", "08-15-2019 17:00", "08-15-2019 17:00"))
 
 str(diurnals_2019_gsw_vs_time_aug15$interval)
 
-
+diurnals_2019_gsw_vs_time_aug15$interval<-mdy_hm(diurnals_2019_gsw_vs_time_aug15$interval)
 diurnals_2019_gsw_vs_time_aug15 %>%
   group_by(interval, treatment, round) %>%
   tally()
@@ -2360,13 +2401,6 @@ str(diurnals_2019_gsw_vs_time_aug15$Rep)
 str(diurnals_2019_gsw_vs_time_aug15$interval)
 
 
-diurnals_2019_gsw_vs_time_aug15$interval<-as.character(diurnals_2019_gsw_vs_time_aug15$interval)
-
-diurnals_2019_gsw_vs_time_aug15$interval<-format(diurnals_2019_gsw_vs_time_aug15$interval)
-
-diurnals_2019_gsw_vs_time_aug15$interval<-as.POSIXct(diurnals_2019_gsw_vs_time_aug15$interval, format = "%m-%d-%Y %H:%M")
-
-str(diurnals_2019_gsw_vs_time_aug15$interval)
 
 
 diurnals_2019_gsw_vs_time_aug15_anova<-diurnals_2019_gsw_vs_time_aug15
@@ -2379,6 +2413,35 @@ diurnals_2019_gsw_vs_time_aug15_anova_tally<-diurnals_2019_gsw_vs_time_aug15_ano
   group_by(interval, treatment)%>%
   tally() 
 
+write.csv(diurnals_2019_gsw_vs_time_aug15_anova_tally,"data_output/diurnals_2019_gsw_vs_time_aug15_anova_tally.csv")
+
+remove_outliers_iqr_by_treatment_interval <- function(data) {
+  data %>%
+    group_by(treatment, interval) %>%  # Group by treatment
+    filter({
+      Q1 <- quantile(gsw, 0.25, na.rm = TRUE)
+      Q3 <- quantile(gsw, 0.75, na.rm = TRUE)
+      IQR <- Q3 - Q1
+      
+      lower_bound <- Q1 - 1.5 * IQR
+      upper_bound <- Q3 + 1.5 * IQR
+      
+      gsw >= lower_bound & gsw <= upper_bound
+    }) %>%
+    ungroup()  # Ungroup after filtering
+}
+
+diurnals_2019_gsw_vs_time_aug15_anova <- diurnals_2019_gsw_vs_time_aug15_anova %>%
+  do(remove_outliers_iqr_by_treatment_interval(.)) %>%  # Apply the outlier removal function
+  ungroup()  # Ungroup the data frame
+
+
+diurnals_2019_gsw_vs_time_aug15_anova_tally_no_outliers<-diurnals_2019_gsw_vs_time_aug15_anova%>%
+  group_by(interval, treatment)%>%
+  tally() 
+
+
+write.csv(diurnals_2019_gsw_vs_time_aug15_anova_tally_no_outliers,"data_output/diurnals_2019_gsw_vs_time_aug15_anova_tally_no_outliers.csv")
 diurnals_2019_gsw_vs_time_aug15_anova$treatment <- as.factor(diurnals_2019_gsw_vs_time_aug15_anova$treatment)
 
 str(diurnals_2019_gsw_vs_time_aug15_anova$treatment)
@@ -2401,7 +2464,7 @@ for (current_interval in intervals) {
   data_subset$treatment <- as.factor(data_subset$treatment)
   
   # Perform one-way ANOVA
-  anova_result <- aov(gsw ~ treatment, data = data_subset)
+  anova_result <- aov(gsw ~ treatment/BH_Vine, data = data_subset)
   
   # Perform Tukey's HSD test
   tukey_result <- HSD.test(anova_result , trt = "treatment", alpha =0.05, unbalanced = "TRUE")
@@ -2435,7 +2498,7 @@ for (current_interval in intervals) {
   results_df_gsw_diurnal_aug_15_bh_2019 <- rbind(interval_results,results_df_gsw_diurnal_aug_15_bh_2019)
 }
 
-results_df_gsw_diurnal_aug_15_bh_2019$interval <- as.POSIXct(results_df_gsw_diurnal_aug_15_bh_2019$interval, format = "%m-%d-%Y %H:%M")
+results_df_gsw_diurnal_aug_15_bh_2019$interval <- as.POSIXct(results_df_gsw_diurnal_aug_15_bh_2019$interval, format = "%m-%d-%Y %H:%M", tz = "UTC")
 
 # Check the structure to confirm the conversion
 str(results_df_gsw_diurnal_aug_15_bh_2019$interval)
@@ -2454,9 +2517,9 @@ pd<- position_dodge(1400)
 gsw_vs_time_aug_15_BH_2019_diurnal<-
   ggplot(results_df_gsw_diurnal_aug_15_bh_2019, aes(x = interval, y = mean, group = treatment, color =treatment)) +
   geom_point(position = position_dodge(width = 0.8), size = 3, alpha =0.6) + 
+  geom_line(alpha =0.6, size =1.1, linetype = "solid", stat = "identity") +
   geom_errorbar(aes(ymin = mean - standard_error, ymax = mean + standard_error), 
                 position = position_dodge(width = 1), size =1.1, width = 3800, alpha =0.6) +
-  geom_line(alpha =0.6, size =1.1, linetype = "solid", stat = "identity") +
   scale_shape_manual(values = c(16,15,17), name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET")) +
   scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
   theme_classic() +
@@ -2476,7 +2539,8 @@ gsw_vs_time_aug_15_BH_2019_diurnal<-
   theme(axis.text.x = element_text(size =20))+
   theme(axis.text.y = element_text(size =20))+
   scale_x_datetime(date_breaks = "2 hours", date_labels = "%H:%M") +
-  theme(legend.position = "none") 
+  theme(legend.position = "none") +
+  theme(axis.title.x = element_text(color = "white"), axis.text.x = element_text(color = "white"), axis.ticks.x = element_blank())
 
 
 ggsave(gsw_vs_time_aug_15_BH_2019_diurnal, filename = "figures/gsw_vs_time_aug_15_BH_2019_diurnal.pdf", device = cairo_pdf, width = 8, height = 6)
@@ -2515,7 +2579,7 @@ gsw_vs_time_aug_15_BH_2019_diurnal_with_letters <- gsw_vs_time_aug_15_BH_2019_di
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(0,0.6,0.1), limits = c (0,0.6)) 
@@ -2597,7 +2661,7 @@ for (current_interval in intervals) {
   data_subset$treatment <- as.factor(data_subset$treatment)
   
   # Perform one-way ANOVA
-  anova_result <- aov(gsw ~ treatment, data = data_subset)
+  anova_result <- aov(gsw ~ treatment/BH_Vine, data = data_subset)
   
   # Perform Tukey's HSD test
   tukey_result <- HSD.test(anova_result , trt = "treatment", alpha =0.05, unbalanced = "TRUE")
@@ -4008,7 +4072,7 @@ ggsave(A_vs_time_july_10_BH_2020_diurnal_with_letters, filename = "figures/A_vs_
 
 diurnals_2020_A_vs_time_jul12<- diurnals_2020_A_vs_time %>%
   filter(!is.na(A)) %>%
-  select(datetime, day, A, pixel_number, round, treatment) %>%
+  select(datetime, day, A, pixel_number, round, treatment, BLOCK, VINE, LEAF) %>%
   filter(day == "194")  %>%
   mutate(interval = case_when(
     round == 1 ~ "7/12/2020 5:30",
@@ -4036,6 +4100,8 @@ diurnals_2020_A_vs_time_jul12 %>%
   group_by(interval, treatment, round) %>%
   tally()
 
+
+
 diurnals_2020_A_vs_time_jul12$treatment<- reorder(diurnals_2020_A_vs_time_jul12$treatment, diurnals_2020_A_vs_time_jul12$datetime) 
 
 
@@ -4045,10 +4111,40 @@ diurnals_2020_A_vs_time_jul12_anova<-diurnals_2020_A_vs_time_jul12
 diurnals_2020_A_vs_time_jul12_anova$treatment <- as.character(diurnals_2020_A_vs_time_jul12_anova$treatment)
 str(diurnals_2020_A_vs_time_jul12_anova$treatment)
 
-diurnals_2020_A_vs_time_jul12_anova%>%
+diurnals_2020_A_vs_time_jul12_anova_tally<-diurnals_2020_A_vs_time_jul12_anova%>%
   group_by(interval, treatment)%>%
   tally() 
 
+
+
+write.csv(diurnals_2020_A_vs_time_jul12_anova_tally,"data_output/diurnals_2020_A_vs_time_jul12_anova_tally.csv")
+
+remove_outliers_iqr_by_treatment_interval <- function(data) {
+  data %>%
+    group_by(treatment, interval) %>%  # Group by treatment
+    filter({
+      Q1 <- quantile(A, 0.25, na.rm = TRUE)
+      Q3 <- quantile(A, 0.75, na.rm = TRUE)
+      IQR <- Q3 - Q1
+      
+      lower_bound <- Q1 - 1.5 * IQR
+      upper_bound <- Q3 + 1.5 * IQR
+      
+      A >= lower_bound & A <= upper_bound
+    }) %>%
+    ungroup()  # Ungroup after filtering
+}
+
+diurnals_2020_A_vs_time_jul12_anova <- diurnals_2020_A_vs_time_jul12_anova %>%
+  do(remove_outliers_iqr_by_treatment_interval(.)) %>%  # Apply the outlier removal function
+  ungroup()  # Ungroup the data frame
+
+
+diurnals_2020_A_vs_time_jul12_anova_tally_no_outliers<-diurnals_2020_A_vs_time_jul12_anova%>%
+  group_by(interval, treatment)%>%
+  tally() 
+
+write.csv(diurnals_2020_A_vs_time_jul12_anova_tally_no_outliers,"data_output/diurnals_2020_A_vs_time_jul12_anova_tally_no_outliers.csv")
 diurnals_2020_A_vs_time_jul12_anova$treatment <- as.factor(diurnals_2020_A_vs_time_jul12_anova$treatment)
 
 str(diurnals_2020_A_vs_time_jul12_anova$treatment)
@@ -4071,7 +4167,7 @@ for (current_interval in intervals) {
   data_subset$treatment <- as.factor(data_subset$treatment)
   
   # Perform one-way ANOVA
-  anova_result <- aov(A ~ treatment, data = data_subset)
+  anova_result <- aov(A ~ treatment/VINE, data = data_subset)
   
   # Perform Tukey's HSD test
   tukey_result <- HSD.test(anova_result , trt = "treatment", alpha =0.05, unbalanced = "TRUE")
@@ -4132,7 +4228,7 @@ A_vs_time_july_12_BH_2020_diurnal<-
   theme_classic() +
   scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
   ylab(expression(Net~photosynthesis~(µmol~m^{-2}~s^{-1}))) +
-  ggtitle("July 12 2020") +
+  ggtitle("HW2 2020") +
   theme(plot.title = element_text(hjust = 0.5, size = 23, face = "bold", family = "serif")) +
   xlab("Time") +
   theme(axis.title.y = element_text(size=23, family = "serif")) +
@@ -4173,7 +4269,7 @@ significant_diffs <- results_df_A_diurnal_july_12_bh_2020 %>%
 plot_with_letters <- plot_means +
   geom_text(data = significant_diffs, aes(label = letters_ordered.groups), vjust = -0.5, hjust= -0.5, size = 4, position = position_dodge(width = 0.8))
 # Rotate x-axis labels for better readability
-vertical_offset <- 0.9  # Adjust this value based on your desired spacing
+vertical_offset <- 1.2  # Adjust this value based on your desired spacing
 
 # Calculate the maximum mean value for each date
 significant_diffs <- significant_diffs %>%
@@ -4189,7 +4285,7 @@ A_vs_time_july_12_BH_2020_diurnal_with_letters <- A_vs_time_july_12_BH_2020_diur
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(-2,22,3), limits = c (-2,22)) 
@@ -4590,7 +4686,7 @@ ggsave(gsw_vs_time_july_10_BH_2020_diurnal_with_letters, filename = "figures/gsw
 # Sample data frame structure (replace this with your actual data frame)
 diurnals_2020_gsw_vs_time_jul12<- diurnals_2020_A_vs_time %>%
   filter(!is.na(A)) %>%
-  select(datetime, day, gsw, pixel_number, round, treatment) %>%
+  select(datetime, day, gsw, pixel_number, round, treatment, BLOCK, VINE, LEAF) %>%
   filter(day == "194")  %>%
   mutate(interval = case_when(
     round == 1 ~ "7/12/2020 5:30",
@@ -4627,9 +4723,44 @@ diurnals_2020_gsw_vs_time_jul12_anova<-diurnals_2020_gsw_vs_time_jul12
 diurnals_2020_gsw_vs_time_jul12_anova$treatment <- as.character(diurnals_2020_gsw_vs_time_jul12_anova$treatment)
 str(diurnals_2020_gsw_vs_time_jul12_anova$treatment)
 
-diurnals_2020_gsw_vs_time_jul12_anova%>%
+diurnals_2020_gsw_vs_time_jul12_anova_tally<-diurnals_2020_gsw_vs_time_jul12_anova%>%
   group_by(interval, treatment)%>%
   tally() 
+
+write.csv(diurnals_2020_gsw_vs_time_jul12_anova_tally,"data_output/diurnals_2020_gsw_vs_time_jul12_anova_tally.csv")
+
+remove_outliers_iqr_by_treatment_interval <- function(data) {
+  data %>%
+    group_by(treatment, interval) %>%  # Group by treatment and interval
+    filter({
+      if (unique(interval) == "2020-07-12 05:30:00") {  # Check for the specific interval only once per group
+        TRUE  # Retain all values for the first interval
+      } else {
+        Q1 <- quantile(gsw, 0.25, na.rm = TRUE)
+        Q3 <- quantile(gsw, 0.75, na.rm = TRUE)
+        IQR <- Q3 - Q1
+        
+        lower_bound <- Q1 - 1.5 * IQR
+        upper_bound <- Q3 + 1.5 * IQR
+        
+        gsw >= lower_bound & gsw <= upper_bound  # Apply filtering for other intervals
+      }
+    }) %>%
+    ungroup()  # Ungroup after filtering
+}
+
+        
+
+diurnals_2020_gsw_vs_time_jul12_anova <- diurnals_2020_gsw_vs_time_jul12_anova %>%
+  do(remove_outliers_iqr_by_treatment_interval(.)) %>%  # Apply the outlier removal function
+  ungroup()  # Ungroup the data frame
+
+
+diurnals_2020_gsw_vs_time_jul12_anova_tally_no_outliers<-diurnals_2020_gsw_vs_time_jul12_anova%>%
+  group_by(interval, treatment)%>%
+  tally() 
+
+write.csv(diurnals_2020_gsw_vs_time_jul12_anova_tally_no_outliers,"data_output/diurnals_2020_gsw_vs_time_jul12_anova_tally_no_outliers.csv")
 
 diurnals_2020_gsw_vs_time_jul12_anova$treatment <- as.factor(diurnals_2020_gsw_vs_time_jul12_anova$treatment)
 
@@ -4653,10 +4784,10 @@ for (current_interval in intervals) {
   data_subset$treatment <- as.factor(data_subset$treatment)
   
   # Perform one-way ANOVA
-  anova_result <- aov(gsw ~ treatment, data = data_subset)
+  anova_result <- aov(gsw ~ treatment/VINE, data = data_subset)
   
   # Perform Tukey's HSD test
-  tukey_result <- HSD.test(anova_result , trt = "treatment", alpha =0.05)
+  tukey_result <- HSD.test(anova_result , trt = "treatment", alpha =0.05, unbalanced = TRUE)
   
   # Extract p-values
   p_values <- summary(anova_result)[[1]]$`Pr(>F)`[1]
@@ -4714,7 +4845,7 @@ gsw_vs_time_july_12_BH_2020_diurnal<-
   theme_classic() +
   scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
   ylab(expression(Stomatal~conductance~(mol~m^{-2}~s^{-1}))) +
-  ggtitle("July 12 2020") +
+#  ggtitle("July 12 2020") +
   theme(plot.title = element_text(hjust = 0.5, size = 23, face = "bold", family = "serif",color ="white")) +
   xlab("Time") +
   theme(axis.title.y = element_text(size=23, family = "serif")) +
@@ -4730,7 +4861,9 @@ gsw_vs_time_july_12_BH_2020_diurnal<-
   theme(axis.text.y = element_text(size =20))+
   theme(legend.position = "none")+
   theme(axis.title.y = element_text(color = "white"), axis.text.y = element_text(color = "white"),
-        axis.ticks.y = element_blank()) 
+        axis.ticks.y = element_blank()) +
+  theme(axis.title.x = element_text(color = "white"), axis.text.x = element_text(color = "white"),
+        axis.ticks.x = element_blank()) 
 
 ggsave(gsw_vs_time_july_12_BH_2020_diurnal, filename = "figures/gsw_vs_time_july_12_BH_2020_diurnal.pdf", device = cairo_pdf, width = 8, height = 6)
 
@@ -4768,7 +4901,7 @@ gsw_vs_time_july_12_BH_2020_diurnal_with_letters <- gsw_vs_time_july_12_BH_2020_
                 x = interval, 
                 y = y_position), 
             vjust = -2,  # Adjust vertical justification
-            size = 6, 
+            size = 7, 
             position = position_dodge(width = 0), 
             color = "black") +
   scale_y_continuous(breaks=seq(0,0.6,0.1), limits = c (0,0.6)) 
@@ -5189,10 +5322,10 @@ ggsave(A_vs_time_aug_13_BH_2020_diurnal_with_letters, filename = "figures/A_vs_t
 
 diurnals_2020_A_vs_time_aug19<- diurnals_2020_A_vs_time %>%
   filter(!is.na(A)) %>%
-  select(datetime, day, A, pixel_number, round, treatment) %>%
+  select(datetime, day, A, pixel_number, round, treatment, VINE, BLOCK, LEAF) %>%
   filter(day == "232")  %>%
   mutate(interval = case_when(
-    round == 1 ~ "8/19/2020 6:00",
+    round == 1 ~ "8/19/2020 5:30",
     round == 2 ~ "8/19/2020 9:00",
     round == 3 ~ "8/19/2020 11:30", 
     round == 4 ~ "8/19/2020 13:30",
@@ -5227,9 +5360,38 @@ diurnals_2020_A_vs_time_aug19_anova<-diurnals_2020_A_vs_time_aug19
 diurnals_2020_A_vs_time_aug19_anova$treatment <- as.character(diurnals_2020_A_vs_time_aug19_anova$treatment)
 str(diurnals_2020_A_vs_time_aug19_anova$treatment)
 
-diurnals_2020_A_vs_time_aug19_anova%>%
+diurnals_2020_A_vs_time_aug19_anova_tally<-diurnals_2020_A_vs_time_aug19_anova%>%
   group_by(interval, treatment)%>%
   tally() 
+
+write.csv(diurnals_2020_A_vs_time_aug19_anova_tally,"data_output/diurnals_2020_A_vs_time_aug19_anova_tally.csv")
+
+remove_outliers_iqr_by_treatment_interval <- function(data) {
+  data %>%
+    group_by(treatment, interval) %>%  # Group by treatment
+    filter({
+      Q1 <- quantile(A, 0.25, na.rm = TRUE)
+      Q3 <- quantile(A, 0.75, na.rm = TRUE)
+      IQR <- Q3 - Q1
+      
+      lower_bound <- Q1 - 1.5 * IQR
+      upper_bound <- Q3 + 1.5 * IQR
+      
+      A >= lower_bound & A <= upper_bound
+    }) %>%
+    ungroup()  # Ungroup after filtering
+}
+
+diurnals_2020_A_vs_time_aug19_anova <- diurnals_2020_A_vs_time_aug19_anova %>%
+  do(remove_outliers_iqr_by_treatment_interval(.)) %>%  # Apply the outlier removal function
+  ungroup()  # Ungroup the data frame
+
+
+diurnals_2020_A_vs_time_aug19_anova_tally_no_outliers<-diurnals_2020_A_vs_time_aug19_anova%>%
+  group_by(interval, treatment)%>%
+  tally() 
+
+write.csv(diurnals_2020_A_vs_time_aug19_anova_tally_no_outliers,"data_output/diurnals_2020_A_vs_time_aug19_anova_tally_no_outliers.csv")
 
 diurnals_2020_A_vs_time_aug19_anova$treatment <- as.factor(diurnals_2020_A_vs_time_aug19_anova$treatment)
 
@@ -5253,7 +5415,7 @@ for (current_interval in intervals) {
   data_subset$treatment <- as.factor(data_subset$treatment)
   
   # Perform one-way ANOVA
-  anova_result <- aov(A ~ treatment, data = data_subset)
+  anova_result <- aov(A ~ treatment/VINE, data = data_subset)
   
   # Perform Tukey's HSD test
   tukey_result <- HSD.test(anova_result , trt = "treatment", alpha =0.05)
@@ -5306,15 +5468,15 @@ pd<- position_dodge(1400)
 A_vs_time_aug_19_BH_2020_diurnal<-
   ggplot(results_df_A_diurnal_aug_19_bh_2020, aes(x = interval, y = mean, group = treatment, color =treatment)) +
   geom_point(position = position_dodge(width = 0.8), size = 3, alpha =0.6) + 
+  geom_line(alpha =0.6, size =1.1, linetype = "solid", stat = "identity") +
   geom_errorbar(aes(ymin = mean - standard_error, ymax = mean + standard_error), 
                 position = position_dodge(width = 1), size =1.1, width = 3800, alpha =0.6) +
-  geom_line(alpha =0.6, size =1.1, linetype = "solid", stat = "identity") +
-  scale_shape_manual(values = c(16,15,17), name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET")) +
-  scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
+  scale_shape_manual(values = c(16,15,17), name = "Treatment", labels = c("Baseline (60% ET)", "120% ET", "180% ET")) +
+  scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "120% ET", "180% ET"))+
   theme_classic() +
-  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
+  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "120% ET", "180% ET"))+
   ylab(expression(Net~photosynthesis~(µmol~m^{-2}~s^{-1}))) +
-  ggtitle("August 19 2020") +
+  ggtitle("HW3 2020") +
   theme(plot.title = element_text(hjust = 0.5, size = 23, face = "bold", family = "serif")) +
   xlab("Time") +
   theme(axis.title.y = element_text(size=23, family = "serif")) +
@@ -5772,10 +5934,10 @@ ggsave(gsw_vs_time_aug_13_BH_2020_diurnal_with_letters, filename = "figures/gsw_
 # Sample data frame structure (replace this with your actual data frame)
 diurnals_2020_gsw_vs_time_aug19<- diurnals_2020_A_vs_time %>%
   filter(!is.na(A)) %>%
-  select(datetime, day, gsw, pixel_number, round, treatment) %>%
+  select(datetime, day, gsw, pixel_number, round, treatment, LEAF, BLOCK, VINE) %>%
   filter(day == "232")  %>%
   mutate(interval = case_when(
-    round == 1 ~ "8/19/2020 6:00",
+    round == 1 ~ "8/19/2020 5:30",
     round == 2 ~ "8/19/2020 9:00",
     round == 3 ~ "8/19/2020 11:30", 
     round == 4 ~ "8/19/2020 13:30",
@@ -5809,15 +5971,45 @@ diurnals_2020_gsw_vs_time_aug19_anova<-diurnals_2020_gsw_vs_time_aug19
 diurnals_2020_gsw_vs_time_aug19_anova$treatment <- as.character(diurnals_2020_gsw_vs_time_aug19_anova$treatment)
 str(diurnals_2020_gsw_vs_time_aug19_anova$treatment)
 
-diurnals_2020_gsw_vs_time_aug19_anova%>%
+diurnals_2020_gsw_vs_time_aug19_anova_tally<-diurnals_2020_gsw_vs_time_aug19_anova%>%
   group_by(interval, treatment)%>%
   tally() 
 
+write.csv(diurnals_2020_gsw_vs_time_aug19_anova_tally,"data_output/diurnals_2020_gsw_vs_time_aug19_anova_tally.csv")
+remove_outliers_iqr_by_treatment_interval <- function(data) {
+  data %>%
+    group_by(treatment, interval) %>%  # Group by treatment
+    filter({
+      Q1 <- quantile(gsw, 0.25, na.rm = TRUE)
+      Q3 <- quantile(gsw, 0.75, na.rm = TRUE)
+      IQR <- Q3 - Q1
+      
+      lower_bound <- Q1 - 1.5 * IQR
+      upper_bound <- Q3 + 1.5 * IQR
+      
+      gsw >= lower_bound & gsw <= upper_bound
+    }) %>%
+    ungroup()  # Ungroup after filtering
+}
+
+diurnals_2020_gsw_vs_time_aug19_anova <- diurnals_2020_gsw_vs_time_aug19_anova %>%
+  do(remove_outliers_iqr_by_treatment_interval(.)) %>%  # Apply the outlier removal function
+  ungroup()  # Ungroup the data frame
+
+
+diurnals_2020_gsw_vs_time_aug19_anova_tally_no_outliers<-diurnals_2020_gsw_vs_time_aug19_anova%>%
+  group_by(interval, treatment)%>%
+  tally() 
+
+write.csv(diurnals_2020_gsw_vs_time_aug19_anova_tally_no_outliers,"data_output/diurnals_2020_gsw_vs_time_aug19_anova_tally_no_outliers.csv")
 diurnals_2020_gsw_vs_time_aug19_anova$treatment <- as.factor(diurnals_2020_gsw_vs_time_aug19_anova$treatment)
+
+
+diurnals_2020_gsw_vs_time_aug19_anova$VINE <- as.factor(diurnals_2020_gsw_vs_time_aug19_anova$VINE)
 
 str(diurnals_2020_gsw_vs_time_aug19_anova$treatment)
 
-
+str(diurnals_2020_gsw_vs_time_aug19_anova)
 # Initialize an empty data frame to store results
 intervals <- unique(diurnals_2020_gsw_vs_time_aug19_anova$interval) 
 str(intervals)
@@ -5835,7 +6027,7 @@ for (current_interval in intervals) {
   data_subset$treatment <- as.factor(data_subset$treatment)
   
   # Perform one-way ANOVA
-  anova_result <- aov(gsw ~ treatment, data = data_subset)
+  anova_result <- aov(gsw ~ treatment/VINE, data = data_subset)
   
   # Perform Tukey's HSD test
   tukey_result <- HSD.test(anova_result , trt = "treatment", alpha =0.05, unbalanced = "TRUE")
@@ -5888,13 +6080,13 @@ pd<- position_dodge(1400)
 gsw_vs_time_aug_19_BH_2020_diurnal<-
   ggplot(results_df_gsw_diurnal_aug_19_bh_2020, aes(x = interval, y = mean, group = treatment, color =treatment)) +
   geom_point(position = position_dodge(width = 0.8), size = 3, alpha =0.6) + 
+  geom_line(alpha =0.6, size =1.1, linetype = "solid", stat = "identity") +
   geom_errorbar(aes(ymin = mean - standard_error, ymax = mean + standard_error), 
                 position = position_dodge(width = 1), size =1.1, width = 3800, alpha =0.6) +
-  geom_line(alpha =0.6, size =1.1, linetype = "solid", stat = "identity") +
-  scale_shape_manual(values = c(16,15,17), name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET")) +
-  scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
+  scale_shape_manual(values = c(16,15,17), name = "Treatment", labels = c("Baseline (60% ET)", "120% ET", "180% ET")) +
+  scale_fill_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "120% ET", "180% ET"))+
   theme_classic() +
-  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "2x baseline ET", "3x baseline ET"))+
+  scale_colour_viridis_d(direction = -1, begin = 0.05, end = 0.93, name = "Treatment", labels = c("Baseline (60% ET)", "120% ET", "180% ET"))+
   ylab(expression(Stomatal~conductance~(mol~m^{-2}~s^{-1}))) +
   ggtitle("August 19 2020") +
   theme(plot.title = element_text(hjust = 0.5, size = 23, face = "bold", family = "serif",color ="white")) +
@@ -5912,7 +6104,9 @@ gsw_vs_time_aug_19_BH_2020_diurnal<-
   theme(axis.text.y = element_text(size =20))+
   theme(legend.position = "none")+
   theme(axis.title.y = element_text(color = "white"), axis.text.y = element_text(color = "white"),
-        axis.ticks.y  = element_blank())
+        axis.ticks.y  = element_blank())+
+  theme(axis.title.x = element_text(color = "white"), axis.text.x = element_text(color = "white"),
+        axis.ticks.x  = element_blank())
 
 ggsave(gsw_vs_time_aug_19_BH_2020_diurnal, filename = "figures/gsw_vs_time_aug_19_BH_2020_diurnal.pdf", device = cairo_pdf, width = 8, height = 6)
 

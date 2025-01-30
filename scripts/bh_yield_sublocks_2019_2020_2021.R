@@ -139,8 +139,7 @@ berry_diameter_BH_2020$year<-2020
 ####2021####
 
 
-harvest_sept_13_2021<-read.csv("data/Blocks_harvest_sept_13_2021.csv", header=TRUE)%>%
-  select(!initials)
+harvest_sept_13_2021<-read.csv("data/Blocks_harvest_sept_13_2021.csv", header=TRUE)
 
 harvest_sept_14_2021<-read.csv("data/Blocks_harvest_sept_14_2021.csv", header=TRUE)%>%
   select(!initials)
@@ -152,6 +151,8 @@ harvest_sept_16_2021<-read.csv("data/Blocks_harvest_sept_16_2021.csv", header=TR
   select(!initials)
 
 str(harvest_sept_13_2021)
+str(harvest_sept_14_2021)
+str(harvest_sept_16_2021)
 
 yield_2021<- rbind(harvest_sept_13_2021,harvest_sept_14_2021, harvest_sept_15_2021,harvest_sept_16_2021)%>%
   filter(!is.na(total.clusters)) 
@@ -238,16 +239,36 @@ str(berry_diameter_BH_2020)
 str(yield_2021_total)
 str(berry_diameter_BH_2021)
 
+yield_bh_2019_grouped2<-yield_bh_2019_grouped2%>%
+  mutate(total.clusters = Clusters)
+
+
+
 bh_yield_2019_sublocks<-yield_bh_2019_grouped2%>%
-  select(year, block_sublock,gr_cluster,Weight_kg,treatment)
+  select(year, block_sublock,gr_cluster,Weight_kg,treatment,total.clusters)
 bh_berry_diameter_2020_sublocks<-berry_diameter_BH_2020%>%
   select(year, block_sublock,berry_diameter,treatment)
 bh_yield_2020_sublocks<-yield_2020_cleaned%>%
-  select(year, block_sublock,gr_cluster,Weight_kg,treatment)
+  select(year, block_sublock,gr_cluster,Weight_kg,treatment,total.clusters)
 bh_berry_diameter_2021_sublocks<-berry_diameter_BH_2021%>%
   select(year, block_sublock,berry_diameter,treatment)
 bh_yield_2021_sublocks<-yield_2021_total%>%
-  select(year, block_sublock,gr_cluster,Weight_kg,treatment)
+  select(year, block_sublock,gr_cluster,Weight_kg,treatment,total.clusters)
+
+
+bh_yield_2019_sublocks_tally<- bh_yield_2019_sublocks%>%
+  group_by(treatment)%>%
+  tally()
+
+bh_yield_2020_sublocks_tally<- bh_yield_2020_sublocks%>%
+  group_by(treatment)%>%
+  tally()
+
+bh_yield_2021_sublocks_tally<- bh_yield_2021_sublocks%>%
+  group_by(treatment)%>%
+  tally()
+
+
 
 
 
@@ -273,6 +294,7 @@ bh_yield_2019_2020_2021_sublocks_tally<-bh_yield_2019_2020_2021_sublocks%>%
   tally()
 
 write.csv(bh_yield_2019_2020_2021_sublocks_tally,"data_output/bh_yield_2019_2020_2021_sublocks_tally.csv")
+
 
 
 #####TWO WAY ANOVA WEIGHT_KG#####
@@ -370,7 +392,6 @@ two.way.plot <- two.way.plot +
   geom_text(data=mean.yield.data, label=mean.yield.data$letters, vjust = -8, size = 5) +
   facet_wrap(~ treatment)+theme_classic()
 
-ggsave(two.way.plot)
 
 ggsave(two.way.plot, filename = "figures/two.way.plot_ANOVA_treatment_year.pdf", device = cairo_pdf, width = 10, height = 8)
 #####THREEE WAY ANOVA WEIGHT_KG#####
@@ -419,17 +440,27 @@ tukey_interaction <- TukeyHSD(anova_result_interaction, "interaction_term_treatm
 
 (test <- HSD.test(anova_result_interaction, "interaction_term_treatment", alpha = 0.05, unbalanced = TRUE))
 
-
+str(bh_yield_2019_2020_2021_sublocks)
 ####ONE WAY ANOVA-TUKEY HSD OF EACH SUBLOCK WITH YEAR AS A FACTOR FOR KG/PLANT ####
 block_sublocks <- unique(bh_yield_2019_2020_2021_sublocks$block_sublock)
 
+
 # Initialize an empty data frame to store the results
+results <- data.frame()
+
+# Initialize an empty results data frame
 results <- data.frame()
 
 # Iterate over each unique block_sublock
 for (block in block_sublocks) {
   # Subset data for the current block_sublock
   subset_data <- subset(bh_yield_2019_2020_2021_sublocks, block_sublock == block)
+  
+  # Check if there are at least two levels of 'year'
+  if (length(unique(subset_data$year)) < 2) {
+    # Skip this iteration if there are fewer than 2 levels
+    next
+  }
   
   # Perform one-way ANOVA with year as the factor
   model_formula <- Weight_kg ~ year
@@ -444,7 +475,7 @@ for (block in block_sublocks) {
   # Extract means
   means <- aggregate(subset_data$Weight_kg, by = list(subset_data$year), FUN = mean)
   colnames(means) <- c("year", "mean")
-
+  
   # Extract standard errors
   standard_errors <- aggregate(subset_data$Weight_kg, by = list(subset_data$year), FUN = function(x) sd(x)/sqrt(length(x)))
   colnames(standard_errors) <- c("year", "standard_error")
@@ -477,6 +508,7 @@ for (block in block_sublocks) {
   # Append the summary statistics to the results data frame
   results <- rbind(results, variable_result_df)
 }
+
 
 results$Mean_sem <- paste(round(results$mean, 2), "±", round(results$standard_error, 2),results$letters)
 
@@ -617,13 +649,21 @@ tukey_interaction <- TukeyHSD(anova_result_interaction, "interaction_term_treatm
 ####ONE WAY ANOVA-TUKEY HSD OF EACH SUBLOCK WITH YEAR AS A FACTOR FOR GR/CLUSTER ####
 block_sublocks <- unique(bh_yield_2019_2020_2021_sublocks$block_sublock)
 
+
 # Initialize an empty data frame to store the results
 results <- data.frame()
+
 
 # Iterate over each unique block_sublock
 for (block in block_sublocks) {
   # Subset data for the current block_sublock
   subset_data <- subset(bh_yield_2019_2020_2021_sublocks, block_sublock == block)
+  
+  # Check if there are at least two levels of 'year'
+  if (length(unique(subset_data$year)) < 2) {
+    # Skip this iteration if there are fewer than 2 levels
+    next
+  }
   
   # Perform one-way ANOVA with year as the factor
   model_formula <- gr_cluster ~ year
@@ -671,6 +711,7 @@ for (block in block_sublocks) {
   # Append the summary statistics to the results data frame
   results <- rbind(results, variable_result_df)
 }
+
 
 results$Mean_sem <- paste(round(results$mean, 2), "±", round(results$standard_error, 2),results$letters)
 
@@ -732,8 +773,74 @@ tukey_interaction <- TukeyHSD(anova_result_interaction, "interaction_term_treatm
 
 (test <- HSD.test(anova_result_interaction, "interaction_term_treatment", alpha = 0.05, unbalanced = TRUE))
 
+####ONE WAY ANOVA-TUKEY HSD OF EACH SUBLOCK WITH YEAR AS A FACTOR FOR TOTAL CLUSTERS ####
+block_sublocks <- unique(bh_yield_2019_2020_2021_sublocks$block_sublock)
 
+# Initialize an empty data frame to store the results
+results <- data.frame()
 
+# Iterate over each unique block_sublock
+for (block in block_sublocks) {
+  # Subset data for the current block_sublock
+  subset_data <- subset(bh_yield_2019_2020_2021_sublocks, block_sublock == block)
+  
+  # Check if there are at least two levels of 'year'
+  if (length(unique(subset_data$year)) < 2) {
+    # Skip this iteration if there are fewer than 2 levels
+    next
+  }
+  
+  # Perform one-way ANOVA with year as the factor
+  model_formula <- total.clusters ~ year
+  anova_result <- aov(model_formula, data = subset_data)
+  
+  # Extract p-value for the year factor
+  p_value <- summary(anova_result)[[1]]$`Pr(>F)`[1]
+  
+  # Perform Tukey's HSD test
+  tukey_result <- TukeyHSD(anova_result, "year")
+  
+  # Extract means
+  means <- aggregate(subset_data$total.clusters, by = list(subset_data$year), FUN = mean)
+  colnames(means) <- c("year", "mean")
+  
+  # Extract standard errors
+  standard_errors <- aggregate(subset_data$total.clusters, by = list(subset_data$year), FUN = function(x) sd(x)/sqrt(length(x)))
+  colnames(standard_errors) <- c("year", "standard_error")
+  
+  # Extract letters of significance 
+  test <- HSD.test(anova_result, "year", alpha = 0.05, unbalanced = TRUE)
+  letters <- data.frame(year = rownames(test$groups), letters = test$groups$groups)
+  
+  # Create a dataframe for results of the current variable
+  variable_result_df <- data.frame(
+    block_sublock = block,
+    year = levels(subset_data$year),
+    p_value = p_value,
+    stringsAsFactors = FALSE
+  )
+  
+  # Merge means, standard errors, and letters with variable_result_df
+  variable_result_df <- merge(variable_result_df, means, by = "year", all.x = TRUE)
+  variable_result_df <- merge(variable_result_df, standard_errors, by = "year", all.x = TRUE)
+  variable_result_df <- merge(variable_result_df, letters, by = "year", all.x = TRUE)
+  
+  # Add significance based on p-value
+  variable_result_df$Significance <- case_when(
+    variable_result_df$p_value < 0.001 ~ "***",
+    variable_result_df$p_value < 0.01 ~ "**",
+    variable_result_df$p_value < 0.05 ~ "*",
+    TRUE ~ ""
+  )
+  
+  # Append the summary statistics to the results data frame
+  results <- rbind(results, variable_result_df)
+}
+
+results$Mean_sem <- paste(round(results$mean, 2), "±", round(results$standard_error, 2),results$letters)
+
+result_sublocks_one_way_anova_year_factor_total.clusters<- results
+write.csv(result_sublocks_one_way_anova_year_factor_total.clusters,"data_output/result_sublocks_one_way_anova_year_factor_total.clusters.csv")
 
 #####TWO-WAY ANOVA BERRY DIAMETER####
 # Ensure the necessary columns are factors
